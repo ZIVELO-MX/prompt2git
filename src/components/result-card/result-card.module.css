@@ -1,0 +1,157 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: fadeIn 0.25s ease;
+}
+
+/* ─── Code block ─────────────────────────── */
+
+.codeCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.codeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.codeLabel {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  font-family: var(--font-mono);
+}
+
+.copyBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 3px 10px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-sans);
+}
+
+.copyBtn:hover {
+  border-color: var(--text-muted);
+  color: var(--text-secondary);
+}
+
+.copyBtn.copied {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.codeBody {
+  padding: 16px 20px;
+}
+
+.eduHint {
+  padding: 8px 20px 14px;
+  font-size: 11.5px;
+  color: var(--amber);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-sans);
+}
+
+.eduHintCode {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--amber);
+  margin: 0 2px;
+}
+
+/* ─── Explanation panel ──────────────────── */
+
+.explCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.explToggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  transition: background 0.15s;
+}
+
+.explToggle.collapsed {
+  border-bottom: none;
+}
+
+.explToggle:hover {
+  background: var(--bg-elevated);
+}
+
+.explToggleLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.explAccent {
+  color: var(--accent);
+}
+
+.explChevron {
+  color: var(--text-muted);
+  transition: transform 0.2s;
+}
+
+.explChevron.rotated {
+  transform: rotate(-90deg);
+}
+
+.explBody {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.explItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.explItemLabel {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.explItemText {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}

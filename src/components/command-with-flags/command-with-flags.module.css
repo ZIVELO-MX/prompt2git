@@ -1,0 +1,74 @@
+.plain {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.tokens {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 6px;
+  align-items: center;
+}
+
+.tokenWrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.token {
+  cursor: default;
+  color: var(--text-primary);
+}
+
+.tokenGit {
+  color: var(--text-muted);
+}
+
+.tokenSubcmd {
+  color: var(--accent);
+}
+
+.tokenFlag {
+  color: var(--amber);
+  background: var(--amber-dim);
+  border-radius: 4px;
+  padding: 1px 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-decoration: underline dotted var(--amber);
+  text-underline-offset: 3px;
+}
+
+.tokenFlag:hover {
+  background: var(--amber-dim);
+}
+
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-elevated);
+  border: 1px solid var(--amber);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  width: 220px;
+  z-index: 10;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  animation: popIn 0.15s ease;
+  white-space: normal;
+  font-family: var(--font-sans);
+  pointer-events: none;
+}
+
+.tooltipFlag {
+  color: var(--amber);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+}

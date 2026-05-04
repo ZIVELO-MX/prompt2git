@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prompt2Git — Natural Language to Git</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body { background: var(--bg-base); color: var(--text-primary); font-family: var(--font-sans); }
+  :root {
+    --bg-base: oklch(0.12 0.01 240);
+    --bg-surface: oklch(0.16 0.012 240);
+    --bg-elevated: oklch(0.19 0.012 240);
+    --bg-card: oklch(0.17 0.012 240);
+    --border: oklch(0.26 0.015 240);
+    --border-subtle: oklch(0.20 0.012 240);
+    --text-primary: oklch(0.92 0.01 240);
+    --text-secondary: oklch(0.62 0.015 240);
+    --text-muted: oklch(0.44 0.012 240);
+    --accent: oklch(0.75 0.22 142);
+    --accent-dim: oklch(0.75 0.22 142 / 0.15);
+    --accent-glow: oklch(0.75 0.22 142 / 0.35);
+    --amber: oklch(0.78 0.18 72);
+    --amber-dim: oklch(0.78 0.18 72 / 0.15);
+    --red: oklch(0.65 0.20 22);
+    --red-dim: oklch(0.65 0.20 22 / 0.15);
+    --blue: oklch(0.72 0.16 240);
+    --blue-dim: oklch(0.72 0.16 240 / 0.15);
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-sans: 'DM Sans', sans-serif;
+    --sidebar-w: 280px;
+    --radius: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes popIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  textarea::placeholder { color: var(--text-muted); }
+  textarea { scrollbar-width: thin; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  input:focus { outline: none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ─── Icons ─────────────────────────────────────────────────────────────────
+const GitIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/>
+    <path d="M18 9a9 9 0 0 0-9 9"/><line x1="6" y1="9" x2="6" y2="15"/>
+  </svg>
+);
+
+const HistoryIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/>
+    <path d="M12 7v5l4 2"/>
+  </svg>
+);
+
+const MortarboardIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
+  </svg>
+);
+
+const CopyIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+);
+
+const SettingsIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+);
+
+const KeyIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+  </svg>
+);
+
+// ─── Utilities ─────────────────────────────────────────────────────────────
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const h = Math.floor(diff / 3600000);
+  const d = Math.floor(diff / 86400000);
+  if (d > 0) return `hace ${d}d`;
+  if (h > 0) return `hace ${h}h`;
+  const m = Math.floor(diff / 60000);
+  if (m > 0) return `hace ${m}m`;
+  return 'ahora';
+}
+
+// ─── Placeholders ──────────────────────────────────────────────────────────
+const PLACEHOLDERS = [
+  'deshacer el último commit sin perder cambios…',
+  'subir mi rama al remoto por primera vez…',
+  'ver solo los commits de la última semana…',
+  'fusionar dos ramas sin crear un merge commit…',
+  'guardar mis cambios temporalmente y limpiar…',
+];
+
+// ─── Initial history ────────────────────────────────────────────────────────
+const INITIAL_HISTORY = [
+  {
+    id: 'h1', timestamp: Date.now() - 86400000 * 2,
+    input: 'deshacer el último commit pero mantener los cambios',
+    command: 'git reset --soft HEAD~1',
+    explanation: [
+      { what: '¿Qué hace?', text: 'Mueve el puntero HEAD un commit hacia atrás sin modificar el índice ni el directorio de trabajo.' },
+      { what: '¿Cómo funciona?', text: 'El flag --soft preserva todos los cambios del commit deshecho en el staging area, listos para ser re-confirmados.' },
+      { what: '¿Por qué usarlo?', text: 'Ideal cuando escribiste el mensaje de commit incorrecto o necesitas añadir más cambios antes de confirmar.' },
+    ],
+    flags: [
+      { flag: '--soft', meaning: 'Mantiene los cambios en el staging area (index). No modifica los archivos del working tree.' },
+      { flag: 'HEAD~1', meaning: 'Referencia relativa al commit padre directo del HEAD actual. ~1 significa "un commit antes".' },
+    ],
+  },
+  {
+    id: 'h2', timestamp: Date.now() - 86400000,
+    input: 'crear una rama nueva y cambiarme a ella',
+    command: 'git checkout -b feature/nueva-rama',
+    explanation: [
+      { what: '¿Qué hace?', text: 'Crea una nueva rama y cambia el working tree al contexto de esa rama en un solo paso.' },
+      { what: '¿Cómo funciona?', text: 'Es equivalente a ejecutar git branch y git checkout por separado, pero en un único comando más eficiente.' },
+      { what: '¿Por qué usarlo?', text: 'Cuando comienzas a trabajar en una nueva funcionalidad y quieres mantener el trabajo aislado en su propia rama.' },
+    ],
+    flags: [
+      { flag: '-b', meaning: 'Indica a checkout que cree la rama si no existe. Sin este flag, checkout falla si el destino no existe.' },
+    ],
+  },
+  {
+    id: 'h3', timestamp: Date.now() - 3600000,
+    input: 'subir mi rama al remoto por primera vez',
+    command: 'git push -u origin HEAD',
+    explanation: [
+      { what: '¿Qué hace?', text: 'Publica la rama local actual en el repositorio remoto llamado "origin" y establece el tracking automático.' },
+      { what: '¿Cómo funciona?', text: 'HEAD resuelve dinámicamente al nombre de tu rama actual, mientras que -u configura el upstream para futuros git push sin argumentos.' },
+      { what: '¿Por qué usarlo?', text: 'La primera vez que publicas una rama, necesitas establecer el vínculo entre local y remoto para sincronizar.' },
+    ],
+    flags: [
+      { flag: '-u', meaning: 'Establece el upstream tracking. Después de esto, git push y git pull funcionan sin argumentos en esta rama.' },
+    ],
+  },
+];
+
+// ─── CommandWithFlags ───────────────────────────────────────────────────────
+function CommandWithFlags({ command, flags, eduMode }) {
+  const [activeFlag, setActiveFlag] = useState(null);
+
+  if (!eduMode || !flags || flags.length === 0) {
+    return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--text-primary)' }}>{command}</span>;
+  }
+
+  const tokens = command.split(' ');
+  return (
+    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, display: 'flex', flexWrap: 'wrap', gap: '0 6px', alignItems: 'center' }}>
+      {tokens.map((token, i) => {
+        const flagInfo = flags.find(f => f.flag === token);
+        const isGit = token === 'git';
+        const isSubcmd = i === 1;
+        return (
+          <span key={i} style={{ position: 'relative', display: 'inline-block' }}>
+            <span
+              onClick={() => flagInfo ? setActiveFlag(activeFlag === token ? null : token) : null}
+              style={{
+                cursor: flagInfo ? 'pointer' : 'default',
+                color: isGit ? 'var(--text-muted)' :
+                       flagInfo ? 'var(--amber)' :
+                       isSubcmd ? 'var(--accent)' :
+                       token.startsWith('-') ? 'var(--amber)' :
+                       'var(--text-primary)',
+                background: flagInfo ? 'var(--amber-dim)' : 'transparent',
+                borderRadius: 4,
+                padding: flagInfo ? '1px 4px' : '0',
+                transition: 'background 0.15s',
+                textDecoration: flagInfo ? 'underline dotted var(--amber)' : 'none',
+                textUnderlineOffset: 3,
+              }}
+            >
+              {token}
+            </span>
+            {flagInfo && activeFlag === token && (
+              <span style={{
+                position: 'absolute',
+                bottom: '100%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                marginBottom: 6,
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--amber)',
+                borderRadius: 6,
+                padding: '8px 12px',
+                fontSize: 12,
+                color: 'var(--text-secondary)',
+                width: 220,
+                zIndex: 10,
+                boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+                animation: 'popIn 0.15s ease',
+                whiteSpace: 'normal',
+              }}>
+                <span style={{ color: 'var(--amber)', fontWeight: 600, display: 'block', marginBottom: 4 }}>{flagInfo.flag}</span>
+                {flagInfo.meaning}
+              </span>
+            )}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+// ─── ResultCard ─────────────────────────────────────────────────────────────
+function ResultCard({ result, eduMode }) {
+  const [copied, setCopied] = useState(false);
+  const [expandedExpl, setExpandedExpl] = useState(true);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(result.command).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, animation: 'fadeIn 0.25s ease' }}>
+      {/* Command block */}
+      <div style={{
+        background: 'var(--bg-card)', border: '1px solid var(--border)',
+        borderRadius: 'var(--radius)', overflow: 'hidden',
+      }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '10px 16px', background: 'var(--bg-elevated)',
+          borderBottom: '1px solid var(--border-subtle)',
+        }}>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.06em', fontFamily: 'var(--font-mono)' }}>BASH</span>
+          <button
+            onClick={handleCopy}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              background: copied ? 'var(--accent-dim)' : 'transparent',
+              border: `1px solid ${copied ? 'var(--accent)' : 'var(--border)'}`,
+              borderRadius: 5, padding: '3px 10px',
+              fontSize: 11.5, color: copied ? 'var(--accent)' : 'var(--text-muted)',
+              cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'var(--font-sans)',
+            }}
+          >
+            {copied ? <CheckIcon /> : <CopyIcon />}
+            {copied ? 'Copiado' : 'Copiar'}
+          </button>
+        </div>
+        <div style={{ padding: '16px 20px' }}>
+          <CommandWithFlags command={result.command} flags={result.flags} eduMode={eduMode} />
+        </div>
+        {eduMode && result.flags && result.flags.length > 0 && (
+          <div style={{
+            padding: '8px 20px 14px', fontFamily: 'var(--font-sans)', fontSize: 11.5,
+            color: 'var(--amber)', display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            <MortarboardIcon />
+            Toca un flag en <span style={{ color: 'var(--amber)', fontFamily: 'var(--font-mono)', fontSize: 11, margin: '0 3px' }}>naranja</span> para ver su significado
+          </div>
+        )}
+      </div>
+
+      {/* Explanation panel */}
+      <div style={{
+        background: 'var(--bg-card)', border: '1px solid var(--border)',
+        borderRadius: 'var(--radius)', overflow: 'hidden',
+      }}>
+        <button
+          onClick={() => setExpandedExpl(e => !e)}
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '12px 16px', background: 'transparent', border: 'none',
+            borderBottom: expandedExpl ? '1px solid var(--border-subtle)' : 'none',
+            cursor: 'pointer', color: 'var(--text-secondary)', fontFamily: 'var(--font-sans)', fontSize: 13,
+          }}
+        >
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 500 }}>
+            <span style={{ color: 'var(--accent)' }}>✦</span>
+            Explicación del comando
+          </span>
+          <span style={{ transform: expandedExpl ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s', fontSize: 10, color: 'var(--text-muted)' }}>▼</span>
+        </button>
+        {expandedExpl && (
+          <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {result.explanation.map((item, i) => (
+              <div key={i}>
+                <div style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 600, marginBottom: 4, letterSpacing: '0.04em' }}>{item.what}</div>
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{item.text}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── HistoryItem ────────────────────────────────────────────────────────────
+function HistoryItem({ item, active, onSelect }) {
+  return (
+    <button
+      onClick={() => onSelect(item)}
+      style={{
+        width: '100%', textAlign: 'left',
+        background: active ? 'var(--accent-dim)' : 'transparent',
+        border: 'none',
+        borderLeft: `2px solid ${active ? 'var(--accent)' : 'transparent'}`,
+        padding: '10px 14px', cursor: 'pointer',
+        transition: 'all 0.15s', display: 'flex', flexDirection: 'column', gap: 5,
+      }}
+      onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--bg-elevated)'; }}
+      onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}
+    >
+      <div style={{ fontSize: 12.5, color: active ? 'var(--text-primary)' : 'var(--text-secondary)', lineHeight: 1.4, fontWeight: active ? 500 : 400 }}>
+        {item.input.length > 55 ? item.input.slice(0, 55) + '…' : item.input}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <code style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: active ? 'var(--accent)' : 'var(--text-muted)' }}>
+          {item.command.length > 30 ? item.command.slice(0, 30) + '…' : item.command}
+        </code>
+        <span style={{ fontSize: 10.5, color: 'var(--text-muted)', flexShrink: 0 }}>{timeAgo(item.timestamp)}</span>
+      </div>
+    </button>
+  );
+}
+
+// ─── Sidebar ─────────────────────────────────────────────────────────────────
+function Sidebar({ history, activeId, onSelect, onClear }) {
+  return (
+    <aside style={{
+      width: 'var(--sidebar-w)', flexShrink: 0,
+      background: 'var(--bg-surface)', borderRight: '1px solid var(--border)',
+      display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden',
+    }}>
+      <div style={{
+        padding: '20px 18px 18px', borderBottom: '1px solid var(--border)',
+        display: 'flex', alignItems: 'center', gap: 10,
+      }}>
+        <GitIcon />
+        <div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>Prompt2Git</div>
+          <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginTop: 1 }}>Natural Language → Git</div>
+        </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px 8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.08em', fontWeight: 600 }}>
+          <HistoryIcon /> RECIENTES
+        </div>
+        {history.length > 0 && (
+          <button
+            onClick={onClear}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10.5, color: 'var(--text-muted)', padding: '2px 6px', borderRadius: 4, transition: 'color 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+          >Limpiar</button>
+        )}
+      </div>
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        {history.length === 0 ? (
+          <div style={{ padding: '24px 16px', fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', lineHeight: 1.6 }}>
+            Aún no hay comandos generados
+          </div>
+        ) : (
+          history.map(item => (
+            <HistoryItem key={item.id} item={item} active={item.id === activeId} onSelect={onSelect} />
+          ))
+        )}
+      </div>
+    </aside>
+  );
+}
+
+// ─── Setup Screen ────────────────────────────────────────────────────────────
+function SetupScreen({ onSave }) {
+  const [apiKey, setApiKey] = useState('');
+  const [error, setError] = useState(null);
+
+  const handleSave = () => {
+    const key = apiKey.trim();
+    if (!key.startsWith('sk-ant-')) { setError('La clave debe comenzar con sk-ant-'); return; }
+    localStorage.setItem('prompt2git_api_key', key);
+    onSave(key);
+  };
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-base)', flexDirection: 'column', gap: 32 }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 12 }}>
+          <GitIcon />
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em' }}>Prompt2Git</span>
+        </div>
+        <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Necesitas una API key de Anthropic para continuar.</p>
+      </div>
+      <div style={{
+        background: 'var(--bg-surface)', border: '1px solid var(--border)',
+        borderRadius: 12, padding: '28px 32px', width: 420, display: 'flex', flexDirection: 'column', gap: 16,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', fontSize: 13, fontWeight: 500 }}>
+          <KeyIcon /> Anthropic API Key
+        </div>
+        <input
+          type="password"
+          value={apiKey}
+          onChange={e => { setApiKey(e.target.value); setError(null); }}
+          onKeyDown={e => e.key === 'Enter' && handleSave()}
+          placeholder="sk-ant-..."
+          style={{
+            background: 'var(--bg-elevated)', border: `1px solid ${error ? 'var(--red)' : 'var(--border)'}`,
+            borderRadius: 8, padding: '10px 14px',
+            color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontSize: 13,
+            width: '100%', transition: 'border-color 0.2s',
+          }}
+          autoFocus
+        />
+        {error && <div style={{ fontSize: 12, color: 'var(--red)' }}>{error}</div>}
+        <button
+          onClick={handleSave}
+          style={{
+            background: 'var(--accent)', color: 'var(--bg-base)', border: 'none',
+            borderRadius: 8, padding: '10px', fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 600,
+            cursor: 'pointer', transition: 'opacity 0.15s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+        >Guardar y continuar</button>
+        <p style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', lineHeight: 1.6 }}>
+          La clave se guarda localmente en tu navegador.<br />Nunca se envía a ningún servidor excepto Anthropic.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Tweaks Panel ────────────────────────────────────────────────────────────
+function TweaksPanel({ tweaks, setTweaks, onChangeKey }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    if (open) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const Toggle = ({ tweakKey, label }) => (
+    <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', fontSize: 13, color: 'var(--text-secondary)' }}>
+      {label}
+      <div
+        onClick={() => setTweaks(t => ({ ...t, [tweakKey]: !t[tweakKey] }))}
+        style={{
+          width: 36, height: 20, borderRadius: 10,
+          background: tweaks[tweakKey] ? 'var(--accent)' : 'var(--border)',
+          position: 'relative', cursor: 'pointer', transition: 'background 0.2s', flexShrink: 0,
+        }}
+      >
+        <div style={{
+          position: 'absolute', top: 3, left: tweaks[tweakKey] ? 18 : 3,
+          width: 14, height: 14, borderRadius: '50%', background: 'white',
+          transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+        }} />
+      </div>
+    </label>
+  );
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          background: open ? 'var(--accent-dim)' : 'transparent',
+          border: `1px solid ${open ? 'var(--accent)' : 'var(--border)'}`,
+          borderRadius: 8, padding: '6px 10px',
+          color: open ? 'var(--accent)' : 'var(--text-muted)',
+          cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center',
+        }}
+        title="Ajustes"
+      >
+        <SettingsIcon />
+      </button>
+      {open && (
+        <div style={{
+          position: 'absolute', right: 0, top: 'calc(100% + 8px)',
+          background: 'var(--bg-elevated)', border: '1px solid var(--border)',
+          borderRadius: 10, padding: '16px', width: 220, zIndex: 100,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+          display: 'flex', flexDirection: 'column', gap: 14,
+          animation: 'fadeIn 0.15s ease',
+        }}>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.08em' }}>INTERFAZ</div>
+          <Toggle tweakKey="showSidebar" label="Sidebar de historial" />
+          <Toggle tweakKey="eduMode" label="Modo Educativo" />
+          <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 12, fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.08em' }}>API</div>
+          <button
+            onClick={() => { localStorage.removeItem('prompt2git_api_key'); onChangeKey(); setOpen(false); }}
+            style={{
+              background: 'var(--red-dim)', border: '1px solid var(--red)', borderRadius: 6,
+              padding: '7px 10px', fontSize: 12, color: 'var(--red)', cursor: 'pointer', fontFamily: 'var(--font-sans)',
+            }}
+          >Cambiar API Key</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main App ────────────────────────────────────────────────────────────────
+function App() {
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('prompt2git_api_key') || '');
+  const [tweaks, setTweaks] = useState({ showSidebar: true, eduMode: false });
+  const [history, setHistory] = useState(INITIAL_HISTORY);
+  const [result, setResult] = useState(null);
+  const [activeId, setActiveId] = useState('h3');
+  const [input, setInput] = useState('');
+  const [charCount, setCharCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [placeholderIdx, setPlaceholderIdx] = useState(0);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    const item = history.find(h => h.id === 'h3');
+    if (item) setResult(item);
+  }, []);
+
+  useEffect(() => {
+    const iv = setInterval(() => setPlaceholderIdx(i => (i + 1) % PLACEHOLDERS.length), 3500);
+    return () => clearInterval(iv);
+  }, []);
+
+  const handleInputChange = e => {
+    const val = e.target.value.slice(0, 280);
+    setInput(val);
+    setCharCount(val.length);
+    if (error) setError(null);
+  };
+
+  const handleKeyDown = e => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleGenerate();
+  };
+
+  const handleSelect = useCallback(item => {
+    setResult(item);
+    setActiveId(item.id);
+  }, []);
+
+  const handleClear = useCallback(() => {
+    setHistory([]);
+    setResult(null);
+    setActiveId(null);
+  }, []);
+
+  const handleGenerate = useCallback(async () => {
+    const trimmed = input.trim();
+    if (!trimmed || loading) return;
+    if (trimmed.length > 280) { setError('Máximo 280 caracteres.'); return; }
+
+    setLoading(true);
+    setError(null);
+
+    const prompt = `You are a Git expert assistant. The user will describe a Git action in natural language (in Spanish).
+
+Your task:
+1. Translate the description into the most appropriate Git command
+2. Provide a 3-part explanation in Spanish
+3. List all flags/arguments in the command with their meanings in Spanish
+
+Respond with ONLY valid JSON in this exact format:
+{
+  "command": "git <command>",
+  "explanation": [
+    { "what": "¿Qué hace?", "text": "..." },
+    { "what": "¿Cómo funciona?", "text": "..." },
+    { "what": "¿Por qué usarlo?", "text": "..." }
+  ],
+  "flags": [
+    { "flag": "--flag-name", "meaning": "..." }
+  ]
+}
+
+Rules:
+- Only include flags/arguments that actually appear in the command
+- All explanation text and flag meanings must be in Spanish
+- command must be a syntactically correct git command
+- If the command has no flags or special arguments, return "flags": []
+- If the request is not related to Git version control, return: {"error": "not_git"}
+
+User request: "${trimmed}"`;
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 1024,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error?.message || `Error ${response.status}`);
+      }
+
+      const data = await response.json();
+      const raw = data.content[0].text;
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('Formato de respuesta inválido');
+      const parsed = JSON.parse(jsonMatch[0]);
+
+      if (parsed.error === 'not_git') {
+        setError('Esta instrucción no parece estar relacionada con Git. Describe una acción de control de versiones.');
+        setLoading(false);
+        return;
+      }
+
+      const newItem = {
+        id: `h${Date.now()}`,
+        timestamp: Date.now(),
+        input: trimmed,
+        command: parsed.command,
+        explanation: parsed.explanation,
+        flags: parsed.flags || [],
+      };
+
+      setHistory(prev => {
+        if (prev.find(h => h.input === trimmed)) return prev;
+        return [newItem, ...prev];
+      });
+      setResult(newItem);
+      setActiveId(newItem.id);
+      setInput('');
+      setCharCount(0);
+    } catch (e) {
+      setError(e.message || 'Ocurrió un error. Intenta de nuevo.');
+    } finally {
+      setLoading(false);
+    }
+  }, [input, loading, apiKey]);
+
+  if (!apiKey) {
+    return <SetupScreen onSave={setApiKey} />;
+  }
+
+  const { showSidebar, eduMode } = tweaks;
+
+  return (
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', fontFamily: 'var(--font-sans)' }}>
+      {showSidebar && (
+        <Sidebar history={history} activeId={activeId} onSelect={handleSelect} onClear={handleClear} />
+      )}
+      <main style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        {/* Top bar */}
+        <header style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0 28px', height: 56,
+          borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)', flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {!showSidebar && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 12 }}>
+                <GitIcon />
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700 }}>Prompt2Git</span>
+              </div>
+            )}
+            <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
+              Describe lo que quieres hacer con Git
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button
+              onClick={() => setTweaks(t => ({ ...t, eduMode: !t.eduMode }))}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: eduMode ? 'var(--amber-dim)' : 'transparent',
+                border: `1px solid ${eduMode ? 'var(--amber)' : 'var(--border)'}`,
+                borderRadius: 8, padding: '5px 12px', fontSize: 12.5,
+                color: eduMode ? 'var(--amber)' : 'var(--text-muted)',
+                cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'var(--font-sans)',
+              }}
+            >
+              <MortarboardIcon /> Modo Educativo
+            </button>
+            <TweaksPanel tweaks={tweaks} setTweaks={setTweaks} onChangeKey={() => setApiKey('')} />
+          </div>
+        </header>
+
+        {/* Content */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '28px 40px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* Input card */}
+          <div style={{
+            background: 'var(--bg-surface)',
+            border: `1px solid ${error ? 'var(--red)' : 'var(--border)'}`,
+            borderRadius: 12, padding: '18px 20px',
+            transition: 'border-color 0.2s, box-shadow 0.2s',
+            boxShadow: error ? '0 0 0 3px var(--red-dim)' : 'none',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--accent)', marginTop: 2, userSelect: 'none' }}>$</span>
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                placeholder={PLACEHOLDERS[placeholderIdx]}
+                disabled={loading}
+                rows={3}
+                style={{
+                  flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                  color: 'var(--text-primary)', fontFamily: 'var(--font-sans)', fontSize: 15,
+                  resize: 'none', lineHeight: 1.6, caretColor: 'var(--accent)',
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                {error
+                  ? <span style={{ fontSize: 12, color: 'var(--red)' }}>{error}</span>
+                  : <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>⌘↵ para generar</span>
+                }
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 11.5, color: charCount > 240 ? 'var(--amber)' : 'var(--text-muted)' }}>{charCount}/280</span>
+                <button
+                  onClick={handleGenerate}
+                  disabled={loading || !input.trim()}
+                  style={{
+                    background: loading || !input.trim() ? 'var(--border)' : 'var(--accent)',
+                    color: loading || !input.trim() ? 'var(--text-muted)' : 'var(--bg-base)',
+                    border: 'none', borderRadius: 8, padding: '7px 18px',
+                    fontSize: 13.5, fontWeight: 600,
+                    cursor: loading || !input.trim() ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s', fontFamily: 'var(--font-sans)',
+                    display: 'flex', alignItems: 'center', gap: 6,
+                  }}
+                >
+                  {loading ? (
+                    <>
+                      <span style={{ display: 'inline-block', width: 12, height: 12, border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                      Generando…
+                    </>
+                  ) : 'Generar →'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Result or empty state */}
+          {result ? (
+            <ResultCard result={result} eduMode={eduMode} />
+          ) : (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 0' }}>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', lineHeight: 1.7 }}>
+                Escribe en lenguaje natural y obtén el comando Git correcto
+              </div>
+              <div style={{ marginTop: 24, display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+                {['deshacer último commit', 'crear rama nueva', 'stash mis cambios', 'ver log compacto'].map(s => (
+                  <button
+                    key={s}
+                    onClick={() => { setInput(s); setCharCount(s.length); inputRef.current?.focus(); }}
+                    style={{
+                      background: 'var(--bg-surface)', border: '1px solid var(--border)',
+                      borderRadius: 20, padding: '6px 14px',
+                      fontSize: 12.5, color: 'var(--text-secondary)', cursor: 'pointer',
+                      transition: 'all 0.15s', fontFamily: 'var(--font-sans)',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                  >{s}</button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

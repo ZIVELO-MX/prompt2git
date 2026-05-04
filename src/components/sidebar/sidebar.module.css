@@ -1,0 +1,143 @@
+.aside {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.logo {
+  padding: 20px 18px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logoText {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.logoSub {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.historyHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 8px;
+}
+
+.historyLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.clearBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 10.5px;
+  color: var(--text-muted);
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.15s;
+  font-family: var(--font-sans);
+}
+
+.clearBtn:hover {
+  color: var(--red);
+}
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.empty {
+  padding: 24px 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ─── HistoryItem ─────────────────────────── */
+
+.item {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-left: 2px solid transparent;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-family: var(--font-sans);
+}
+
+.item:hover {
+  background: var(--bg-elevated);
+}
+
+.item.active {
+  background: var(--accent-dim);
+  border-left-color: var(--accent);
+}
+
+.item.active:hover {
+  background: var(--accent-dim);
+}
+
+.itemInput {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  font-weight: 400;
+}
+
+.item.active .itemInput {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.itemMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.itemCommand {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.item.active .itemCommand {
+  color: var(--accent);
+}
+
+.itemTime {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
