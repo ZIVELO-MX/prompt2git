@@ -27,7 +27,12 @@ export function ResultCard({ result, eduMode }: Props) {
       {/* Command block */}
       <div className={styles.codeCard}>
         <div className={styles.codeHeader}>
-          <span className={styles.codeLabel}>BASH</span>
+          <div className={styles.codeHeaderLeft}>
+            <span className={styles.codeLabel}>BASH</span>
+            {result.from_cache && (
+              <span className={styles.cacheBadge}>⚡ Desde cache</span>
+            )}
+          </div>
           <button
             className={`${styles.copyBtn} ${copied ? styles.copied : ''}`}
             onClick={handleCopy}
