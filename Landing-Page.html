@@ -477,6 +477,7 @@ code.inline {
 }
 .cta-submit:hover { background: oklch(0.82 0.20 142); }
 .cta-note { font-size: 12px; color: var(--tx-3); }
+.cta-section a { text-decoration: none; display: inline-block; }
 
 /* ── FOOTER ───────────────────────────────────── */
 footer {
@@ -537,7 +538,7 @@ footer {
       <li><a href="#features">Features</a></li>
       <li><a href="#comparativa">Comparativa</a></li>
     </ul>
-    <button class="nav-cta" onclick="document.getElementById('cta-email').focus()">Únete al beta →</button>
+    <a href="/login"><button class="nav-cta">Empezar ahora →</button></a>
   </div>
 </nav>
 
@@ -549,7 +550,7 @@ footer {
 
       <div class="hero-badge">
         <span class="hero-badge-dot"></span>
-        Beta abierta · Gratis para siempre en el plan básico
+        En producción · 6 proveedores de IA · Gratis
       </div>
 
       <h1 class="hero-title">
@@ -563,14 +564,16 @@ footer {
       </p>
 
       <div class="hero-actions">
-        <button class="btn-primary" onclick="document.getElementById('cta-email').focus()">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2l5 5-5 5M3 7h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Empieza gratis
-        </button>
-        <a href="GitSpeak.html">
+        <a href="/login">
+          <button class="btn-primary">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2l5 5-5 5M3 7h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Empezar ahora
+          </button>
+        </a>
+        <a href="/app">
           <button class="btn-ghost">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M6.5 6C6.5 5.17 7.17 4.5 8 4.5s1.5.67 1.5 1.5c0 1-1.5 1.5-1.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.5" r="0.8" fill="currentColor"/></svg>
-            Ver demo en vivo
+            Ir a la app
           </button>
         </a>
       </div>
@@ -624,26 +627,26 @@ footer {
 <!-- ── STATS ──────────────────────────────────────── -->
 <div class="proof">
   <div class="container">
-    <p class="proof-label">MVP en producción · Mayo 2026</p>
+    <p class="proof-label">Tu API key, tus reglas · Mayo 2026</p>
     <div class="proof-stats">
       <div class="stat-item">
-        <span class="stat-num">2.4<span>k</span></span>
-        <span class="stat-lbl">Comandos generados</span>
+        <span class="stat-num">6</span>
+        <span class="stat-lbl">Proveedores de IA</span>
       </div>
       <div class="stat-div"></div>
       <div class="stat-item">
-        <span class="stat-num">340<span>+</span></span>
-        <span class="stat-lbl">Devs en beta</span>
-      </div>
-      <div class="stat-div"></div>
-      <div class="stat-item">
-        <span class="stat-num">98<span>%</span></span>
-        <span class="stat-lbl">Tasa de acierto</span>
+        <span class="stat-num">50<span>/día</span></span>
+        <span class="stat-lbl">Comandos gratis</span>
       </div>
       <div class="stat-div"></div>
       <div class="stat-item">
         <span class="stat-num">&lt;1<span>s</span></span>
         <span class="stat-lbl">Tiempo de respuesta</span>
+      </div>
+      <div class="stat-div"></div>
+      <div class="stat-item">
+        <span class="stat-num">🔐</span>
+        <span class="stat-lbl">Tu key, cifrada</span>
       </div>
     </div>
   </div>
@@ -670,8 +673,8 @@ footer {
         <div class="step" data-step="1" onclick="activateStep(1)">
           <div class="step-num">2</div>
           <div class="step-content">
-            <div class="step-title">Claude interpreta y genera</div>
-            <div class="step-text">Nuestro modelo analiza tu solicitud, identifica la operación Git correcta y construye el comando sintácticamente preciso con los flags adecuados.</div>
+            <div class="step-title">La IA interpreta y genera</div>
+            <div class="step-text">Elige entre 6 proveedores (Anthropic, OpenAI, Gemini, Groq, Mistral, OpenRouter). Analizamos tu solicitud y generamos el comando preciso con los flags adecuados.</div>
           </div>
         </div>
         <div class="step" data-step="2" onclick="activateStep(2)">
@@ -818,13 +821,25 @@ footer {
       </div>
 
       <div class="feat-card">
-        <div class="feat-icon" style="background:var(--amber-d);border:1px solid oklch(0.79 0.17 72 / 0.25)">
+        <div class="feat-icon" style="background:var(--purple-d);border:1px solid oklch(0.72 0.18 295 / 0.25)">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M10 3v14M3 10h14" stroke="oklch(0.79 0.17 72)" stroke-width="1.8" stroke-linecap="round"/>
+            <circle cx="10" cy="10" r="7" stroke="oklch(0.72 0.18 295)" stroke-width="1.5"/>
+            <path d="M10 7v3l2 2" stroke="oklch(0.72 0.18 295)" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
         </div>
-        <div class="feat-title">Más features pronto</div>
-        <div class="feat-text">Integración con terminal, soporte multi-idioma, comandos avanzados de rebase y stash, y mucho más.</div>
+        <div class="feat-title">Multi-provider</div>
+        <div class="feat-text">Conectá tu API key del proveedor que prefieras: Anthropic, OpenAI, Gemini, Groq, Mistral u OpenRouter. Tú elegís.</div>
+        <div class="feat-code">6 proveedores disponibles</div>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon" style="background:var(--green-d);border:1px solid oklch(0.76 0.22 142 / 0.25)">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M4 10l4 4 8-8" stroke="oklch(0.76 0.22 142)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="feat-title">Historial sincronizado</div>
+        <div class="feat-text">Iniciá sesión con Magic Link o GitHub y tu historial de comandos se sincroniza entre todos tus dispositivos.</div>
       </div>
     </div>
   </div>
@@ -914,10 +929,10 @@ footer {
         <div class="stars">★★★★★</div>
         <p class="testi-quote">"Finalmente puedo trabajar con ramas sin abrir Stack Overflow cada 5 minutos. El modo educativo es oro para el equipo."</p>
         <div class="testi-author">
-          <div class="testi-avatar" style="color:var(--blue)">MR</div>
+          <div class="testi-avatar" style="color:var(--blue)">BR</div>
           <div>
-            <div class="testi-name">Miguel Ríos</div>
-            <div class="testi-role">Tech Lead · Startup México</div>
+            <div class="testi-name">Benjamin Rodriguez</div>
+            <div class="testi-role">Dev Junior · Oracle</div>
           </div>
         </div>
       </div>
@@ -944,12 +959,14 @@ footer {
     <div class="cta-border">
       <div class="cta-bg"></div>
       <h2 class="cta-title">¿Listo para olvidar<br><strong>los flags de Git</strong>?</h2>
-      <p class="cta-sub">Únete a la beta gratuita. Sin tarjeta de crédito. Sin límite de uso en el plan básico.</p>
-      <div class="cta-input-wrap">
-        <input id="cta-email" class="cta-input" type="email" placeholder="tu@email.com">
-        <button class="cta-submit" onclick="handleSignup()">Unirme al beta →</button>
-      </div>
-      <p class="cta-note">Ya somos 340+ devs en beta · Respuesta en menos de 24h</p>
+      <p class="cta-sub">Conectá tu API key y empezá a usar Prompt2Git ahora. Sin espera, sin lista de espera.</p>
+      <a href="/login">
+        <button class="btn-primary" style="font-size:15px;padding:14px 36px">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M8 2l5 5-5 5M3 7h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Empezar ahora — es gratis
+        </button>
+      </a>
+      <p class="cta-note" style="margin-top:16px">Sin registro complicado · Magic Link o GitHub · 50 consultas gratis por día</p>
     </div>
   </div>
 </section>
@@ -996,7 +1013,7 @@ footer {
         <ul class="footer-links">
           <li><a href="#">Privacidad</a></li>
           <li><a href="#">Términos</a></li>
-          <li><a href="GitSpeak.html">App →</a></li>
+          <li><a href="/app">App →</a></li>
         </ul>
       </div>
     </div>
@@ -1020,26 +1037,6 @@ setInterval(() => {
   currentStep = (currentStep + 1) % 3;
   activateStep(currentStep);
 }, 4000);
-
-// ── Signup handler ──────────────────────────────────
-function handleSignup() {
-  const input = document.getElementById('cta-email');
-  const val = input.value.trim();
-  const btn = input.nextElementSibling;
-  if (!val || !val.includes('@')) {
-    input.style.borderLeft = '3px solid oklch(0.65 0.20 22)';
-    input.placeholder = 'Ingresa un email válido';
-    setTimeout(() => { input.style.borderLeft = ''; input.placeholder = 'tu@email.com'; }, 2000);
-    return;
-  }
-  btn.textContent = '✓ Registrado';
-  btn.style.background = 'oklch(0.20 0.015 240)';
-  btn.style.color = 'oklch(0.76 0.22 142)';
-  input.value = '';
-  input.placeholder = '¡Te avisaremos pronto!';
-  input.disabled = true;
-  btn.disabled = true;
-}
 
 // ── Scroll-reveal ──────────────────────────────────
 const observer = new IntersectionObserver((entries) => {
