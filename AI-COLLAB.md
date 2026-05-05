@@ -25,22 +25,26 @@ Todas las tareas C-01 a C-14 y O-01 a O-12 terminadas. Cache semántico con pgve
 
 ---
 
-## Tareas activas — Fase 1
+## Tareas activas — Fase 2
 
 ### Claude
 
 | # | Tarea | Estado |
 |---|-------|--------|
-| C-13 | Indicador visual de cache hit en `ResultCard` (badge "⚡ Desde cache") | ✅ completo |
-| C-14 | UI de rate limit: banner 429 + contador `X queries restantes hoy` | ✅ completo |
+| C-15 | Repo picker en `/app/settings` — UI para elegir repo activo. Llama `/api/github/repos`. Guarda `{ owner, repo, branch }` en localStorage. | ⬜ pendiente |
+| C-16 | Context strip en app — barra sutil bajo el topbar: `owner/repo @ branch` + último commit. Se oculta si no hay repo conectado. | ⬜ pendiente (depende de O-15) |
+| C-17 | "Fix my repo" mode — toggle en InputCard entre modo normal y modo Fix. Modo Fix: textarea para pegar `git status` + descripción del problema. | ⬜ pendiente (depende de O-17) |
+| C-18 | ResultCard multi-comando — cuando la respuesta tiene una secuencia de comandos, mostrarlos como pasos numerados con botón Copiar por paso. | ⬜ pendiente (depende de O-17) |
 
 ### Opencode
 
 | # | Tarea | Estado |
 |---|-------|--------|
-| O-10 | Activar extensión `pgvector` en Supabase + migración `004_embeddings.sql` (columna `embedding vector(1536)` en `commands`) | ✅ completo |
-| O-11 | Pipeline en `/api/generate`: normalize → embedding → similarity search (threshold 0.92) → cache hit return / cache miss call AI + save | ✅ completo |
-| O-12 | Rate limiting por usuario en `/api/generate`: ventana diaria, límite configurable por tier, header `X-RateLimit-Remaining` | ✅ completo |
+| O-13 | GitHub token: extraer `provider_token` de sesión Supabase post-login GitHub. Tabla `github_connections` (user_id, vault_id, username). Migración `005_github.sql`. | ⬜ pendiente |
+| O-14 | `/api/github/repos` — GET: lista repos del usuario vía GitHub API. Respuesta: `[{ owner, name, default_branch, private }]`. | ⬜ pendiente (depende de O-13) |
+| O-15 | `/api/github/context` — GET `?owner=&repo=&branch=`: devuelve `{ branch, last_commit, open_prs_count }`. | ⬜ pendiente (depende de O-13) |
+| O-16 | Update `/api/generate` — inyectar contexto de repo al prompt cuando el usuario tiene uno activo (rama real, último commit). | ⬜ pendiente (depende de O-15) |
+| O-17 | `/api/github/fix` — POST `{ git_status, problem_description }`: analiza estado, devuelve array de comandos ordenados por riesgo (stash → reset → rebase). | ⬜ pendiente (depende de O-13) |
 
 ---
 
@@ -50,7 +54,7 @@ Todas las tareas C-01 a C-14 y O-01 a O-12 terminadas. Cache semántico con pgve
 |------|----------|--------|
 | 0 — MVP | Auth, traducción NL→Git, historial, multi-provider, landing | ✅ completo |
 | 1 — Escala | Cache semántico pgvector + rate limiting | ✅ completo |
-| 2 — Contexto | GitHub read-only + "Fix my repo" | ⬜ |
+| 2 — Contexto | GitHub read-only + "Fix my repo" | 🔄 activa |
 | 3 — Distribución | VS Code Extension | ⬜ |
 | 4 — Retención | Memory layer + quick actions | ⬜ |
 | 5 — Monetización | Freemium + pricing page | ⬜ |
@@ -71,15 +75,28 @@ Todas las tareas C-01 a C-14 y O-01 a O-12 terminadas. Cache semántico con pgve
 
 ---
 
-## Notas entre agentes
+## Decisiones técnicas — Fase 2
+
+| Decisión | Razón |
+|----------|-------|
+| GitHub API read-only (sin webhooks) | Gratis, sin permisos de escritura, suficiente para contexto |
+| `provider_token` de sesión Supabase | El OAuth de GitHub ya está implementado — no hay que re-autenticar |
+| Token en Vault (no columna plain) | Mismo patrón que API keys — consistencia y seguridad |
+| "Fix my repo" en web = pegar git status | La web no puede leer estado local; VS Code extension (Fase 3) lo hará automático |
+| localStorage para repo activo | No necesita persistencia en DB; es preferencia de sesión |
+
+---
+
+## Notas entre agentes — Fase 2
 
 ### Para Opencode
-- Migración `004_embeddings.sql`: pgvector + columna `embedding vector(1536)` + índice IVFFlat + función `match_commands()` + fix de constraints de provider (6 providers). Subir con `supabase db push --linked`.
-- Pipeline `/api/generate`: `normalize(input) → generateEmbedding(input) → supabase.rpc('match_commands')` con threshold 0.92. Si cache hit → return `from_cache: true`. Si no → call AI, save con embedding. Graceful degradation si falla embedding.
-- Rate limit: 50 req/día, ventana UTC, headers `X-RateLimit-Remaining` y `X-RateLimit-Reset`, status `429` con `{ error: 'rate_limit', remaining: 0, reset_at }`.
-- `src/lib/ai-provider.ts` tiene 6 providers. Groq/Mistral/OpenRouter usan `callOpenAICompat`. No modificar firma de `generate()`.
+- **O-13 primero** — todo lo demás depende del token. Tabla `github_connections`: `(id, user_id unique, vault_id, username, connected_at)`. Migración `005_github.sql`. Endpoint `/api/github/connect` para guardar el token post-login.
+- **O-14/O-15**: usar `https://api.github.com` con header `Authorization: Bearer <token>`. Manejar 401 (token expirado/revocado) devolviendo `{ error: 'github_token_invalid' }` para que el cliente muestre "Reconectar GitHub".
+- **O-16**: el prompt de generate debe recibir opcionalmente `repoContext?: { branch, last_commit }`. Si presente, añadir al system prompt: *"El usuario está en la rama `{branch}`. Último commit: `{last_commit}`."*
+- **O-17**: `/api/github/fix` devuelve `{ steps: [{ order, command, risk: 'low'|'medium'|'high', description }] }`. Riesgo: stash=low, reset --soft=low, reset --hard=high, rebase=medium.
 
 ### Para Claude
-- C-13: la respuesta de `/api/generate` ahora incluye `from_cache: boolean`. Si es `true`, mostrar badge "⚡ Desde cache" en `ResultCard`.
-- C-14: el rate limit devuelve `429` con `{ error: 'rate_limit', remaining: 0, reset_at: ISO_DATE }` y headers `X-RateLimit-Remaining`, `X-RateLimit-Reset`. Mostrar toast con `X/50 queries restantes hoy`.
-- Opencode rediseñó la UI de `/app/settings` — grid de 2 columnas, iconos con color de marca, header con icono decorativo, responsive.
+- **C-15**: el repo picker solo aparece si el usuario tiene GitHub conectado (verificar con GET `/api/github/repos`). Si no está conectado, mostrar "Conectar GitHub" que redirige al login con `?provider=github`.
+- **C-16**: el context strip debe ser no intrusivo — altura máx 32px, dismissible por sesión (localStorage). Si el repo no está conectado, no renderizar nada.
+- **C-17**: el toggle Fix/Normal cambia el placeholder y añade el segundo textarea. El botón "Generar" llama `/api/github/fix` en modo Fix y `/api/generate` en modo normal.
+- **C-18**: el tipo `Command` necesita campo opcional `steps?: Step[]` para el multi-comando. Si `steps` existe, `ResultCard` renderiza lista numerada en lugar del bloque único.

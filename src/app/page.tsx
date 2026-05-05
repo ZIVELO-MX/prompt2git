@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { HowItWorks } from '@/components/landing/how-it-works'
-import { EmailCTA } from '@/components/landing/email-cta'
 import styles from './page.module.css'
 
 export default function LandingPage() {
@@ -26,7 +25,7 @@ export default function LandingPage() {
             <li><a href="#features">Features</a></li>
             <li><a href="#comparativa">Comparativa</a></li>
           </ul>
-          <Link href="/app" className={styles.navCta}>Únete al beta →</Link>
+            <a href="/login" className={styles.navCta}>Empezar ahora →</a>
         </div>
       </nav>
 
@@ -38,7 +37,7 @@ export default function LandingPage() {
           <div className={styles.heroContent}>
             <div className={styles.heroBadge}>
               <span className={styles.badgeDot} />
-              Beta abierta · Gratis para siempre en el plan básico
+              En producción · 6 proveedores de IA · Gratis
             </div>
             <h1 className={styles.heroTitle}>
               Escribe en español.<br />
@@ -49,19 +48,19 @@ export default function LandingPage() {
               y obtén el comando Git exacto, explicado línea por línea.
             </p>
             <div className={styles.heroActions}>
-              <Link href="/app" className={styles.btnPrimary}>
+              <a href="/login" className={styles.btnPrimary}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M8 2l5 5-5 5M3 7h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                Empieza gratis
-              </Link>
-              <a href="#como-funciona" className={styles.btnGhost}>
+                Empezar ahora
+              </a>
+              <a href="/app" className={styles.btnGhost}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
                   <path d="M6.5 6C6.5 5.17 7.17 4.5 8 4.5s1.5.67 1.5 1.5c0 1-1.5 1.5-1.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                   <circle cx="8" cy="11.5" r="0.8" fill="currentColor" />
                 </svg>
-                Cómo funciona
+                Ir a la app
               </a>
             </div>
 
@@ -112,28 +111,28 @@ export default function LandingPage() {
       {/* ── Stats ──────────────────────────────── */}
       <div className={styles.proof}>
         <div className={styles.container}>
-          <p className={styles.proofLabel}>MVP en producción · Mayo 2026</p>
-          <div className={styles.proofStats}>
-            <div className={styles.statItem}>
-              <span className={styles.statNum}>2.4<span>k</span></span>
-              <span className={styles.statLbl}>Comandos generados</span>
+            <p className={styles.proofLabel}>Tu API key, tus reglas · Mayo 2026</p>
+            <div className={styles.proofStats}>
+              <div className={styles.statItem}>
+                <span className={styles.statNum}>6</span>
+                <span className={styles.statLbl}>Proveedores de IA</span>
+              </div>
+              <div className={styles.statDiv} />
+              <div className={styles.statItem}>
+                <span className={styles.statNum}>50<span>/día</span></span>
+                <span className={styles.statLbl}>Comandos gratis</span>
+              </div>
+              <div className={styles.statDiv} />
+              <div className={styles.statItem}>
+                <span className={styles.statNum}>&lt;1<span>s</span></span>
+                <span className={styles.statLbl}>Tiempo de respuesta</span>
+              </div>
+              <div className={styles.statDiv} />
+              <div className={styles.statItem}>
+                <span className={styles.statNum}>🔐</span>
+                <span className={styles.statLbl}>Tu key, cifrada</span>
+              </div>
             </div>
-            <div className={styles.statDiv} />
-            <div className={styles.statItem}>
-              <span className={styles.statNum}>340<span>+</span></span>
-              <span className={styles.statLbl}>Devs en beta</span>
-            </div>
-            <div className={styles.statDiv} />
-            <div className={styles.statItem}>
-              <span className={styles.statNum}>98<span>%</span></span>
-              <span className={styles.statLbl}>Tasa de acierto</span>
-            </div>
-            <div className={styles.statDiv} />
-            <div className={styles.statItem}>
-              <span className={styles.statNum}>&lt;1<span>s</span></span>
-              <span className={styles.statLbl}>Tiempo de respuesta</span>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -208,24 +207,25 @@ export default function LandingPage() {
             </div>
 
             <div className={styles.featCard}>
-              <div className={styles.featIcon} style={{ background: 'var(--accent-dim)', border: '1px solid oklch(0.75 0.22 142 / 0.25)' }}>
+              <div className={styles.featIcon} style={{ background: 'var(--purple-dim)', border: '1px solid oklch(0.72 0.18 295 / 0.25)' }}>
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M7 10l2 2 4-4" stroke="oklch(0.75 0.22 142)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  <rect x="3" y="3" width="14" height="14" rx="3" stroke="oklch(0.75 0.22 142)" strokeWidth="1.5" />
+                  <circle cx="10" cy="10" r="7" stroke="oklch(0.72 0.18 295)" strokeWidth="1.5"/>
+                  <path d="M10 7v3l2 2" stroke="oklch(0.72 0.18 295)" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
               </div>
-              <div className={styles.featTitle}>Copia con un clic</div>
-              <p className={styles.featText}>Botón de copia instantánea con feedback visual. Pega directamente en tu terminal sin editar.</p>
+              <div className={styles.featTitle}>Multi-provider</div>
+              <p className={styles.featText}>Conectá tu API key del proveedor que prefieras: Anthropic, OpenAI, Gemini, Groq, Mistral u OpenRouter. Tú elegís.</p>
+              <div className={styles.featCode}>6 proveedores disponibles</div>
             </div>
 
             <div className={styles.featCard}>
-              <div className={styles.featIcon} style={{ background: 'var(--amber-dim)', border: '1px solid oklch(0.78 0.18 72 / 0.25)' }}>
+              <div className={styles.featIcon} style={{ background: 'var(--green-dim)', border: '1px solid oklch(0.76 0.22 142 / 0.25)' }}>
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M10 3v14M3 10h14" stroke="oklch(0.78 0.18 72)" strokeWidth="1.8" strokeLinecap="round" />
+                  <path d="M4 10l4 4 8-8" stroke="oklch(0.76 0.22 142)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <div className={styles.featTitle}>Más features pronto</div>
-              <p className={styles.featText}>Integración con terminal, soporte multi-idioma, comandos avanzados de rebase y stash, y mucho más.</p>
+              <div className={styles.featTitle}>Historial sincronizado</div>
+              <p className={styles.featText}>Iniciá sesión con Magic Link o GitHub y tu historial de comandos se sincroniza entre todos tus dispositivos.</p>
             </div>
           </div>
         </div>
@@ -320,10 +320,10 @@ export default function LandingPage() {
               <div className={styles.stars}>★★★★★</div>
               <p className={styles.testiQuote}>&quot;Finalmente puedo trabajar con ramas sin abrir Stack Overflow cada 5 minutos. El modo educativo es oro para el equipo.&quot;</p>
               <div className={styles.testiAuthor}>
-                <div className={styles.testiAvatar} style={{ color: 'var(--blue)' }}>MR</div>
+                <div className={styles.testiAvatar} style={{ color: 'var(--blue)' }}>BR</div>
                 <div>
-                  <div className={styles.testiName}>Miguel Ríos</div>
-                  <div className={styles.testiRole}>Tech Lead · Startup México</div>
+                  <div className={styles.testiName}>Benjamin Rodriguez</div>
+                  <div className={styles.testiRole}>Dev Junior · Oracle</div>
                 </div>
               </div>
             </div>
@@ -352,8 +352,14 @@ export default function LandingPage() {
             <h2 className={styles.ctaTitle}>
               ¿Listo para olvidar<br /><strong>los flags de Git</strong>?
             </h2>
-            <p className={styles.ctaSub}>Únete a la beta gratuita. Sin tarjeta de crédito. Sin límite de uso en el plan básico.</p>
-            <EmailCTA />
+            <p className={styles.ctaSub}>Conectá tu API key y empezá a usar Prompt2Git ahora. Sin espera, sin lista de espera.</p>
+            <a href="/login" className={styles.btnPrimary} style={{ fontSize: 15, padding: '14px 36px' }}>
+              <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+                <path d="M8 2l5 5-5 5M3 7h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Empezar ahora — es gratis
+            </a>
+            <p className={styles.ctaNote} style={{ marginTop: 16 }}>Sin registro complicado · Magic Link o GitHub · 50 consultas gratis por día</p>
           </div>
         </div>
       </section>

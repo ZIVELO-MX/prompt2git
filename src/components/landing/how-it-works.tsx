@@ -9,8 +9,8 @@ const STEPS = [
     text: 'Escribe en español exactamente lo que quieres hacer con tu repositorio. No necesitas saber la sintaxis de Git ni recordar nombres de comandos.',
   },
   {
-    title: 'Claude interpreta y genera',
-    text: 'Nuestro modelo analiza tu solicitud, identifica la operación Git correcta y construye el comando sintácticamente preciso con los flags adecuados.',
+    title: 'La IA interpreta y genera',
+    text: 'Elige entre 6 proveedores (Anthropic, OpenAI, Gemini, Groq, Mistral, OpenRouter). Analizamos tu solicitud y generamos el comando preciso con los flags adecuados.',
   },
   {
     title: 'Entiende y ejecuta',
