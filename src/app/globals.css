@@ -18,10 +18,31 @@
   --red-dim:       oklch(0.65 0.20 22 / 0.15);
   --blue:          oklch(0.72 0.16 240);
   --blue-dim:      oklch(0.72 0.16 240 / 0.15);
+  --purple:        oklch(0.72 0.18 295);
+  --purple-dim:    oklch(0.72 0.18 295 / 0.15);
   --font-mono:     'JetBrains Mono', monospace;
   --font-sans:     'DM Sans', sans-serif;
   --sidebar-w:     280px;
   --radius:        8px;
+}
+
+/* ─── Light mode ─────────────────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg-base:        oklch(0.96 0.004 240);
+  --bg-surface:     oklch(0.93 0.005 240);
+  --bg-elevated:    oklch(0.90 0.006 240);
+  --bg-card:        oklch(0.91 0.005 240);
+  --border:         oklch(0.82 0.010 240);
+  --border-subtle:  oklch(0.87 0.007 240);
+  --text-primary:   oklch(0.14 0.015 240);
+  --text-secondary: oklch(0.38 0.015 240);
+  --text-muted:     oklch(0.56 0.012 240);
+  --accent-dim:     oklch(0.75 0.22 142 / 0.12);
+  --accent-glow:    oklch(0.75 0.22 142 / 0.20);
+  --amber-dim:      oklch(0.78 0.18 72 / 0.12);
+  --red-dim:        oklch(0.65 0.20 22 / 0.10);
+  --blue-dim:       oklch(0.72 0.16 240 / 0.12);
+  --purple-dim:     oklch(0.72 0.18 295 / 0.12);
 }
 
 /* ─── Reset ─────────────────────────────────────────────────────────────────── */
@@ -33,7 +54,6 @@
 
 html, body {
   height: 100%;
-  overflow: hidden;
   background: var(--bg-base);
   color: var(--text-primary);
   font-family: var(--font-sans);

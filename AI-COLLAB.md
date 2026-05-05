@@ -17,11 +17,11 @@ Canal de comunicación y coordinación entre **Claude** (arquitecto + UI) y **Op
 
 ## Estado actual del proyecto
 
-**Fase activa:** 2 — API keys y generación (Vault + endpoint /api/generate)
-**Última actualización:** 2026-05-03
+**Fase activa:** 4 — Multi-provider + UX polish + Despliegue
+**Última actualización:** 2026-05-04
 
 ### Completado ✅
-- [x] Prototipo HTML funcional (`Prompt2Git.html`) — referencia visual y de UX
+- [x] Prototipo HTML funcional (`GitSpeak.html`) — referencia visual y de UX
 - [x] Roadmap definido (`ROADMAP.md`)
 - [x] Estructura de proyecto Next.js 15 + TypeScript scaffoldeada
 - [x] Design tokens migrados a `globals.css`
@@ -31,14 +31,21 @@ Canal de comunicación y coordinación entre **Claude** (arquitecto + UI) y **Op
 - [x] C-01 — Componente `Sidebar` + `HistoryItem` (`src/components/sidebar/`)
 - [x] C-02 — Componente `ResultCard` (`src/components/result-card/`)
 - [x] C-03 — Componente `CommandWithFlags` con tooltips edu (`src/components/command-with-flags/`)
-- [x] C-04 — Página principal `/app` conectada a `useCommands()`
-- [x] C-05 — `src/hooks/use-commands.ts` — historial paginado con Supabase
-- [x] C-06 — Página `/app/settings` — UI de API keys por proveedor
+- [x] C-04 — Página principal `/app` con estado completo, mock data y TODOs marcados
 - [x] Tipos compartidos (`src/types/index.ts`)
 - [x] O-01 — Proyecto Supabase Cloud configurado + `.env.local`
 - [x] O-02 — Migraciones ejecutadas (001_schema + 002_rls)
 - [x] O-03 — Tipos generados (`src/lib/supabase/types.ts`)
 - [x] O-04 — Login page con Magic Link + GitHub OAuth + callback route
+- [x] O-05 — Vault activo + `/api/keys` para gestionar API keys cifradas
+- [x] O-06 — `/api/generate` funcional: valida sesión, lee Vault, llama AI provider, guarda en commands
+- [x] O-08 — FTS en historial: migration 003_fts.sql + `/api/commands/search` + search bar en sidebar
+- [x] C-07 — Landing page `/` portada desde `Landing-Page.html` a Next.js (`page.tsx` + `page.module.css` + componentes `HowItWorks` y `EmailCTA`)
+- [x] C-08 — Onboarding post-registro: modal 3 pasos con localStorage, montado en `/app`
+- [x] C-09 — Multi-provider expandido: Groq, Mistral AI (+ Codestral), OpenRouter — `ai-provider.ts` + types + settings UI
+- [x] C-10 — Dark/Light mode toggle con `data-theme` en `document.documentElement`, persistido en localStorage
+- [x] C-11 — Settings navegación: botón "← Volver" en settings + link "🔑 Configurar API keys" en TweaksPanel
+- [x] C-12 — Revisión de seguridad: flujo landing → app confirmado — `/app/*` protegido por middleware, API routes con auth propio
 
 ---
 
@@ -54,8 +61,11 @@ Canal de comunicación y coordinación entre **Claude** (arquitecto + UI) y **Op
 | C-04 | Implementar `src/app/app/page.tsx` — UI principal completa | 0 | ✅ completo |
 | C-05 | Implementar `src/hooks/use-commands.ts` — historial con Supabase | 3 | ✅ completo |
 | C-06 | UI de `/app/settings` — formulario para conectar API keys | 2 | ✅ completo |
-| C-07 | Landing page `/` — hero, demo, CTA | 4 | ⬜ pendiente |
-| C-08 | Onboarding post-registro — guía 3 pasos | 4 | ⬜ pendiente |
+| C-07 | Landing page `/` — hero, demo, CTA | 4 | ✅ completo |
+| C-08 | Onboarding post-registro — guía 3 pasos | 4 | ✅ completo |
+| C-09 | Multi-provider: Groq, Mistral, OpenRouter | 4 | ✅ completo |
+| C-10 | Dark/Light mode toggle | 4 | ✅ completo |
+| C-11 | Settings: navegación + acceso desde TweaksPanel | 4 | ✅ completo |
 
 ### Opencode
 
@@ -65,10 +75,10 @@ Canal de comunicación y coordinación entre **Claude** (arquitecto + UI) y **Op
 | O-02 | Ejecutar migraciones en Supabase (001_schema + 002_rls) | 0 | ✅ completo |
 | O-03 | Generar tipos con `npm run db:types` | 0 | ✅ completo |
 | O-04 | Implementar login page con Magic Link + GitHub OAuth | 1 | ✅ completo |
-| O-05 | Activar Supabase Vault y función server para cifrar/descifrar keys | 2 | ⬜ pendiente |
-| O-06 | Implementar `POST /api/generate` — validar sesión + leer Vault + llamar AI | 2 | ⬜ pendiente |
-| O-07 | Guardar cada comando generado en tabla `commands` | 3 | ⬜ pendiente |
-| O-08 | Búsqueda full-text en historial (Supabase FTS) | 3 | ⬜ pendiente |
+| O-05 | Activar Supabase Vault y función server para cifrar/descifrar keys | 2 | ✅ completo |
+| O-06 | Implementar `POST /api/generate` — validar sesión + leer Vault + llamar AI | 2 | ✅ completo |
+| O-07 | Guardar cada comando generado en tabla `commands` | 3 | ✅ completo (incluido en O-06) |
+| O-08 | Búsqueda full-text en historial (Supabase FTS) | 3 | ✅ completo |
 | O-09 | Configurar proyecto en Vercel y conectar repo | 0 | ⬜ pendiente |
 
 ---
@@ -90,7 +100,7 @@ Canal de comunicación y coordinación entre **Claude** (arquitecto + UI) y **Op
 ## Notas entre agentes
 
 ### Para Opencode
-- `src/lib/ai-provider.ts` ya tiene las 3 integraciones listas. En O-06 solo llamas `generate(config, input)` con la config que recuperas de Vault.
+- `src/lib/ai-provider.ts` tiene 6 providers: Anthropic, OpenAI, Gemini, Groq, Mistral, OpenRouter. En O-06 solo llamas `generate(config, input)` con la config que recuperas de Vault. Groq/Mistral/OpenRouter usan el mismo helper `callOpenAICompat` con endpoints distintos.
 - El middleware protege `/app/**` — no repetir validación de sesión en Server Components, solo en Route Handlers.
 - Para Vault: función server recibe `user_id` → busca `vault_id` en `provider_keys` → llama `vault.decryptSecret(vault_id)`.
 - El prototipo de referencia está en `Prompt2Git.html` — útil para entender el flujo completo antes de tocar la API.
