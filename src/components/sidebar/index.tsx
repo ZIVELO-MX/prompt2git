@@ -1,11 +1,10 @@
 'use client'
 
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { Command } from '@/types'
-import { GitIcon, HistoryIcon } from '@/components/ui/icons'
+import { GitIcon, HistoryIcon, SearchIcon } from '@/components/ui/icons'
 import { timeAgo } from '@/components/ui/utils'
 import styles from './sidebar.module.css'
-
-// ─── HistoryItem ─────────────────────────────────────────────────────────────
 
 interface ItemProps {
   item: Command
@@ -33,8 +32,6 @@ function HistoryItem({ item, active, onSelect }: ItemProps) {
   )
 }
 
-// ─── Sidebar ─────────────────────────────────────────────────────────────────
-
 interface SidebarProps {
   history: Command[]
   activeId: string | null
@@ -43,6 +40,39 @@ interface SidebarProps {
 }
 
 export function Sidebar({ history, activeId, onSelect, onClear }: SidebarProps) {
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState<Command[] | null>(null)
+  const [searching, setSearching] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const doSearch = useCallback(async (q: string) => {
+    if (!q.trim()) {
+      setResults(null)
+      return
+    }
+    setSearching(true)
+    try {
+      const res = await fetch(`/api/commands/search?q=${encodeURIComponent(q)}&limit=20`)
+      if (!res.ok) return
+      const data = await res.json() as { commands: Command[] }
+      setResults(data.commands)
+    } catch { /* ignore */ }
+    setSearching(false)
+  }, [])
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value
+    setQuery(val)
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => doSearch(val), 300)
+  }
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
+  }, [])
+
+  const displayed = results ?? history
+
   return (
     <aside className={styles.aside}>
       <div className={styles.logo}>
@@ -53,11 +83,24 @@ export function Sidebar({ history, activeId, onSelect, onClear }: SidebarProps) 
         </div>
       </div>
 
+      <div className={styles.searchWrap}>
+        <SearchIcon />
+        <input
+          type="text"
+          className={styles.searchInput}
+          value={query}
+          onChange={handleSearchChange}
+          placeholder="Buscar en historial…"
+          aria-label="Buscar comandos"
+        />
+        {searching && <span className={styles.searchSpinner} />}
+      </div>
+
       <div className={styles.historyHeader}>
         <span className={styles.historyLabel}>
-          <HistoryIcon /> RECIENTES
+          <HistoryIcon /> {query ? 'RESULTADOS' : 'RECIENTES'}
         </span>
-        {history.length > 0 && (
+        {displayed.length > 0 && !query && (
           <button type="button" className={styles.clearBtn} onClick={onClear}>
             Limpiar
           </button>
@@ -65,15 +108,21 @@ export function Sidebar({ history, activeId, onSelect, onClear }: SidebarProps) 
       </div>
 
       <div className={styles.list}>
-        {history.length === 0 ? (
-          <p className={styles.empty}>Aún no hay comandos generados</p>
+        {displayed.length === 0 ? (
+          <p className={styles.empty}>
+            {query ? 'Sin resultados para esta búsqueda' : 'Aún no hay comandos generados'}
+          </p>
         ) : (
-          history.map(item => (
+          displayed.map(item => (
             <HistoryItem
               key={item.id}
               item={item}
               active={item.id === activeId}
-              onSelect={onSelect}
+              onSelect={(selected) => {
+                onSelect(selected)
+                setQuery('')
+                setResults(null)
+              }}
             />
           ))
         )}

@@ -46,6 +46,74 @@ export function CheckIcon() {
   )
 }
 
+export function AnthropicIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path d="M12 2L2 22h20L12 2z" fill="currentColor" opacity="0.15"/>
+      <path d="M12 2L2 22h20L12 2z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M12 8l-4 10h8l-4-10z" fill="currentColor"/>
+    </svg>
+  )
+}
+
+export function OpenAIIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" opacity="0.15" fill="currentColor"/>
+      <circle cx="12" cy="12" r="7" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.4"/>
+      <circle cx="12" cy="12" r="2.5" fill="currentColor"/>
+    </svg>
+  )
+}
+
+export function GeminiIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path d="M12 2C9.5 2 7 4 7 7c0 3 2.5 5 5 5s5-2 5-5c0-3-2.5-5-5-5z" fill="currentColor" opacity="0.15"/>
+      <path d="M12 2C9.5 2 7 4 7 7c0 3 2.5 5 5 5s5-2 5-5c0-3-2.5-5-5-5z" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M12 12v10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+      <path d="M8 16c2 1.5 4 1.5 8 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.3"/>
+    </svg>
+  )
+}
+
+export function GroqIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path d="M13 2L3 14h8l-2 8 10-12h-8l2-8z" fill="currentColor" opacity="0.15"/>
+      <path d="M13 2L3 14h8l-2 8 10-12h-8l2-8z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+export function MistralIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path d="M4 4h4v4H4V4z" fill="currentColor"/>
+      <path d="M10 4h4v4h-4V4z" fill="currentColor" opacity="0.6"/>
+      <path d="M16 4h4v4h-4V4z" fill="currentColor" opacity="0.3"/>
+      <path d="M4 10h4v4H4v-4z" fill="currentColor" opacity="0.6"/>
+      <path d="M10 10h4v4h-4v-4z" fill="currentColor" opacity="0.4"/>
+      <path d="M16 10h4v4h-4v-4z" fill="currentColor" opacity="0.2"/>
+      <path d="M4 16h4v4H4v-4z" fill="currentColor" opacity="0.3"/>
+      <path d="M10 16h4v4h-4v-4z" fill="currentColor" opacity="0.2"/>
+      <path d="M16 16h4v4h-4v-4z" fill="currentColor" opacity="0.1"/>
+    </svg>
+  )
+}
+
+export function OpenRouterIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" opacity="0.15" fill="currentColor"/>
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5"/>
+      <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+      <path d="M12 2v6M12 16v6M2 12h6M16 12h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.4"/>
+    </svg>
+  )
+}
+
 export function SettingsIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -67,6 +135,39 @@ export function ChevronDownIcon() {
   return (
     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="6 9 12 15 18 9"/>
+    </svg>
+  )
+}
+
+export function SunIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/>
+      <line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/>
+      <line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  )
+}
+
+export function MoonIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  )
+}
+
+export function SearchIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8"/>
+      <path d="m21 21-4.3-4.3"/>
     </svg>
   )
 }

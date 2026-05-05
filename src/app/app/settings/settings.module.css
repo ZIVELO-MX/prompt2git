@@ -10,6 +10,19 @@
 
 /* ─── Header ──────────────────────────────── */
 
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 6px 0;
+  transition: color 0.15s;
+  width: fit-content;
+}
+.backBtn:hover { color: var(--accent); }
+
 .header {
   display: flex;
   flex-direction: column;
@@ -287,4 +300,31 @@
 .formError {
   font-size: 12px;
   color: var(--red);
+}
+
+/* ─── Low cost note ──────────────────────── */
+
+.lowCostNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  padding: 12px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  margin-top: 4px;
+}
+
+.lowCostNote svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--accent);
+  opacity: 0.7;
+}
+
+.lowCostNote strong {
+  color: var(--text-secondary);
 }

@@ -1,15 +1,25 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import type { Provider } from '@/types'
 import styles from './settings.module.css'
 
 // ─── Provider config ──────────────────────────────────────────────────────────
 
+import {
+  AnthropicIcon,
+  OpenAIIcon,
+  GeminiIcon,
+  GroqIcon,
+  MistralIcon,
+  OpenRouterIcon,
+} from '@/components/ui/icons'
+
 interface ProviderMeta {
   id: Provider
   name: string
-  initial: string
+  icon: React.ReactNode
   placeholder: string
   models: string[]
   docsUrl: string
@@ -19,7 +29,7 @@ const PROVIDERS: ProviderMeta[] = [
   {
     id: 'anthropic',
     name: 'Anthropic',
-    initial: 'A',
+    icon: <AnthropicIcon />,
     placeholder: 'sk-ant-...',
     models: ['claude-haiku-4-5-20251001', 'claude-sonnet-4-6', 'claude-opus-4-7'],
     docsUrl: 'https://console.anthropic.com/settings/keys',
@@ -27,7 +37,7 @@ const PROVIDERS: ProviderMeta[] = [
   {
     id: 'openai',
     name: 'OpenAI',
-    initial: 'O',
+    icon: <OpenAIIcon />,
     placeholder: 'sk-...',
     models: ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo'],
     docsUrl: 'https://platform.openai.com/api-keys',
@@ -35,10 +45,34 @@ const PROVIDERS: ProviderMeta[] = [
   {
     id: 'gemini',
     name: 'Google Gemini',
-    initial: 'G',
+    icon: <GeminiIcon />,
     placeholder: 'AIza...',
     models: ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash'],
     docsUrl: 'https://aistudio.google.com/app/apikey',
+  },
+  {
+    id: 'groq',
+    name: 'Groq',
+    icon: <GroqIcon />,
+    placeholder: 'gsk_...',
+    models: ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'mixtral-8x7b-32768', 'gemma2-9b-it'],
+    docsUrl: 'https://console.groq.com/keys',
+  },
+  {
+    id: 'mistral',
+    name: 'Mistral AI',
+    icon: <MistralIcon />,
+    placeholder: 'api key...',
+    models: ['mistral-small-latest', 'mistral-medium-latest', 'codestral-latest'],
+    docsUrl: 'https://console.mistral.ai/api-keys',
+  },
+  {
+    id: 'openrouter',
+    name: 'OpenRouter',
+    icon: <OpenRouterIcon />,
+    placeholder: 'sk-or-v1-...',
+    models: ['meta-llama/llama-3.1-8b-instruct:free', 'anthropic/claude-haiku-4-5', 'openai/gpt-4o-mini', 'google/gemini-flash-1.5'],
+    docsUrl: 'https://openrouter.ai/keys',
   },
 ]
 
@@ -59,9 +93,10 @@ interface ProviderCardProps {
 }
 
 function ProviderCard({ meta, connected, onSave, onRemove }: ProviderCardProps) {
+  const defaultModel = meta.models[0] ?? ''
   const [open, setOpen]     = useState(false)
   const [key, setKey]       = useState('')
-  const [model, setModel]   = useState(connected?.model ?? meta.models[0] ?? '')
+  const [model, setModel]   = useState(connected?.model ?? defaultModel)
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState<string | null>(null)
 
@@ -94,7 +129,7 @@ function ProviderCard({ meta, connected, onSave, onRemove }: ProviderCardProps) 
       <div className={styles.providerHeader}>
         <div className={styles.providerInfo}>
           <div className={`${styles.providerIcon} ${styles[meta.id]}`}>
-            {meta.initial}
+            {meta.icon}
           </div>
           <div>
             <div className={styles.providerName}>{meta.name}</div>
@@ -228,6 +263,9 @@ export default function SettingsPage() {
   return (
     <div className={styles.root}>
       <div className={styles.header}>
+        <Link href="/app" className={styles.backBtn}>
+          ← Volver al app
+        </Link>
         <h1 className={styles.title}>Configuración</h1>
         <p className={styles.subtitle}>
           Conecta la API key del proveedor de IA que prefieras. Tu clave se cifra con Supabase Vault
@@ -246,6 +284,14 @@ export default function SettingsPage() {
             onRemove={handleRemove}
           />
         ))}
+        <div className={styles.lowCostNote}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <span>Cada solicitud se procesa en el modelo de <strong>bajo consumo</strong> de cada proveedor (ej. Claude Haiku, GPT-4o-mini, Gemini Flash), lo que garantiza respuestas rápidas y económicas. Puedes cambiar el modelo en la configuración de cada proveedor.</span>
+        </div>
       </div>
     </div>
   )

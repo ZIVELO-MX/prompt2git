@@ -7,9 +7,19 @@ export interface ProviderConfig {
 }
 
 const MODELS: Record<Provider, string> = {
-  anthropic: 'claude-haiku-4-5-20251001',
-  openai: 'gpt-4o-mini',
-  gemini: 'gemini-1.5-flash',
+  anthropic:   'claude-haiku-4-5-20251001',
+  openai:      'gpt-4o-mini',
+  gemini:      'gemini-1.5-flash',
+  groq:        'llama-3.1-8b-instant',
+  mistral:     'mistral-small-latest',
+  openrouter:  'meta-llama/llama-3.1-8b-instruct:free',
+}
+
+const OPENAI_COMPAT_ENDPOINTS: Partial<Record<Provider, string>> = {
+  openai:     'https://api.openai.com/v1/chat/completions',
+  groq:       'https://api.groq.com/openai/v1/chat/completions',
+  mistral:    'https://api.mistral.ai/v1/chat/completions',
+  openrouter: 'https://openrouter.ai/api/v1/chat/completions',
 }
 
 export const DEFAULT_MODELS = MODELS
@@ -67,13 +77,19 @@ async function callAnthropic(config: ProviderConfig, prompt: string): Promise<st
   return data.content[0]?.text ?? ''
 }
 
-async function callOpenAI(config: ProviderConfig, prompt: string): Promise<string> {
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+async function callOpenAICompat(config: ProviderConfig, prompt: string): Promise<string> {
+  const endpoint = OPENAI_COMPAT_ENDPOINTS[config.provider]!
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${config.apiKey}`,
+  }
+  if (config.provider === 'openrouter') {
+    headers['HTTP-Referer'] = 'https://prompt2git.app'
+    headers['X-Title'] = 'Prompt2Git'
+  }
+  const res = await fetch(endpoint, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`,
-    },
+    headers,
     body: JSON.stringify({
       model: config.model,
       max_tokens: 1024,
@@ -82,7 +98,7 @@ async function callOpenAI(config: ProviderConfig, prompt: string): Promise<strin
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({})) as { error?: { message?: string } }
-    throw new Error(err.error?.message ?? `OpenAI error ${res.status}`)
+    throw new Error(err.error?.message ?? `${config.provider} error ${res.status}`)
   }
   const data = await res.json() as { choices: Array<{ message: { content: string } }> }
   return data.choices[0]?.message.content ?? ''
@@ -125,9 +141,12 @@ export async function generate(config: ProviderConfig, input: string): Promise<G
   let raw: string
 
   switch (config.provider) {
-    case 'anthropic': raw = await callAnthropic(config, prompt); break
-    case 'openai':    raw = await callOpenAI(config, prompt);    break
-    case 'gemini':    raw = await callGemini(config, prompt);    break
+    case 'anthropic':  raw = await callAnthropic(config, prompt);    break
+    case 'openai':
+    case 'groq':
+    case 'mistral':
+    case 'openrouter': raw = await callOpenAICompat(config, prompt); break
+    case 'gemini':     raw = await callGemini(config, prompt);       break
     default: throw new Error(`Proveedor no soportado: ${config.provider}`)
   }
 

@@ -1,15 +1,13 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import Link from 'next/link'
-import type { Command } from '@/types'
+import type { Command, Provider } from '@/types'
 import { Sidebar } from '@/components/sidebar'
 import { ResultCard } from '@/components/result-card'
-import { GitIcon, MortarboardIcon, SettingsIcon } from '@/components/ui/icons'
-import { useCommands } from '@/hooks/use-commands'
+import Link from 'next/link'
+import { GitIcon, MortarboardIcon, SettingsIcon, SunIcon, MoonIcon } from '@/components/ui/icons'
+import { Onboarding } from '@/components/onboarding'
 import styles from './page.module.css'
-
-// ─── Constants ───────────────────────────────────────────────────────────────
 
 const PLACEHOLDERS = [
   'deshacer el último commit sin perder cambios…',
@@ -26,9 +24,6 @@ const SUGGESTIONS = [
   'ver log compacto',
 ]
 
-
-// ─── TweaksPanel ─────────────────────────────────────────────────────────────
-
 interface TweaksState {
   showSidebar: boolean
   eduMode: boolean
@@ -37,10 +32,10 @@ interface TweaksState {
 interface TweaksPanelProps {
   tweaks: TweaksState
   onChange: (key: keyof TweaksState) => void
-  onChangeKey: () => void
+  onLogout: () => void
 }
 
-function TweaksPanel({ tweaks, onChange, onChangeKey }: TweaksPanelProps) {
+function TweaksPanel({ tweaks, onChange, onLogout }: TweaksPanelProps) {
   return (
     <div className={styles.tweaksPanel}>
       <span className={styles.tweaksSectionLabel}>INTERFAZ</span>
@@ -64,17 +59,19 @@ function TweaksPanel({ tweaks, onChange, onChangeKey }: TweaksPanelProps) {
 
       <span className={styles.tweaksSectionDivider}>CUENTA</span>
 
-      <Link href="/app/settings" className={styles.changeKeyBtn} onClick={onChangeKey}>
-        Configurar API keys
+      <Link href="/app/settings" className={styles.apiKeysLink}>
+        🔑 Configurar API keys
       </Link>
+
+      <button type="button" className={styles.logoutBtn} onClick={onLogout}>
+        Cerrar sesión
+      </button>
     </div>
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
 export default function AppPage() {
-  const { commands, loading: histLoading, append, clear } = useCommands()
+  const [history, setHistory]         = useState<Command[]>([])
   const [result, setResult]           = useState<Command | null>(null)
   const [activeId, setActiveId]       = useState<string | null>(null)
   const [input, setInput]             = useState('')
@@ -84,17 +81,31 @@ export default function AppPage() {
   const [placeholderIdx, setPlaceholderIdx] = useState(0)
   const [tweaks, setTweaks]           = useState<TweaksState>({ showSidebar: true, eduMode: false })
   const [showTweaks, setShowTweaks]   = useState(false)
+  const [theme, setTheme]             = useState<'dark' | 'light'>('dark')
 
   const inputRef    = useRef<HTMLTextAreaElement>(null)
   const tweaksRef   = useRef<HTMLDivElement>(null)
 
-  // Rotate placeholders
+  useEffect(() => {
+    const saved = localStorage.getItem('p2g_theme') as 'dark' | 'light' | null
+    if (saved) {
+      setTheme(saved)
+      document.documentElement.setAttribute('data-theme', saved)
+    }
+  }, [])
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    setTheme(next)
+    localStorage.setItem('p2g_theme', next)
+    document.documentElement.setAttribute('data-theme', next)
+  }
+
   useEffect(() => {
     const iv = setInterval(() => setPlaceholderIdx(i => (i + 1) % PLACEHOLDERS.length), 3500)
     return () => clearInterval(iv)
   }, [])
 
-  // Close tweaks on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (tweaksRef.current && !tweaksRef.current.contains(e.target as Node)) {
@@ -104,6 +115,19 @@ export default function AppPage() {
     if (showTweaks) document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [showTweaks])
+
+  useEffect(() => {
+    fetchHistory()
+  }, [])
+
+  const fetchHistory = async () => {
+    try {
+      const res = await fetch('/api/commands')
+      if (!res.ok) return
+      const data = await res.json() as { commands: Command[] }
+      setHistory(data.commands)
+    } catch { /* ignore */ }
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value.slice(0, 280)
@@ -122,13 +146,20 @@ export default function AppPage() {
   }, [])
 
   const handleClear = useCallback(async () => {
-    await clear()
+    setHistory([])
     setResult(null)
     setActiveId(null)
-  }, [clear])
+  }, [])
 
   const toggleTweak = (key: keyof TweaksState) => {
     setTweaks(t => ({ ...t, [key]: !t[key] }))
+  }
+
+  const handleLogout = async () => {
+    const { createClient } = await import('@/lib/supabase/client')
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    window.location.href = '/login'
   }
 
   const handleGenerate = useCallback(async () => {
@@ -140,8 +171,6 @@ export default function AppPage() {
     setError(null)
 
     try {
-      // TODO(O-06): reemplazar por llamada real a /api/generate cuando Opencode implemente el endpoint
-      // El endpoint validará la sesión, leerá la key de Vault y llamará a ai-provider.ts
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -149,11 +178,11 @@ export default function AppPage() {
       })
 
       if (!res.ok) {
-        if (res.status === 501) {
-          setError('El endpoint de generación aún no está implementado (Fase 2).')
+        const body = await res.json().catch(() => ({})) as { error?: string }
+        if (body.error === 'not_git') {
+          setError('Esta instrucción no parece estar relacionada con Git.')
           return
         }
-        const body = await res.json().catch(() => ({})) as { error?: string }
         throw new Error(body.error ?? `Error ${res.status}`)
       }
 
@@ -161,7 +190,10 @@ export default function AppPage() {
 
       if (!data.command) throw new Error('Respuesta inválida del servidor')
 
-      append(data.command)
+      setHistory(prev => {
+        if (prev.find(h => h.input === trimmed)) return prev
+        return [data.command, ...prev]
+      })
       setResult(data.command)
       setActiveId(data.command.id)
       setInput('')
@@ -169,11 +201,7 @@ export default function AppPage() {
 
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Ocurrió un error. Intenta de nuevo.'
-      if (msg === 'not_git') {
-        setError('Esta instrucción no parece estar relacionada con Git.')
-      } else {
-        setError(msg)
-      }
+      setError(msg)
     } finally {
       setLoading(false)
     }
@@ -183,9 +211,10 @@ export default function AppPage() {
 
   return (
     <div className={styles.root}>
+      <Onboarding />
       {showSidebar && (
         <Sidebar
-          history={commands}
+          history={history}
           activeId={activeId}
           onSelect={handleSelect}
           onClear={handleClear}
@@ -193,13 +222,12 @@ export default function AppPage() {
       )}
 
       <main className={styles.main}>
-        {/* Top bar */}
         <header className={styles.topBar}>
           <div className={styles.topBarLeft}>
             {!showSidebar && (
               <div className={styles.topBarBrand}>
                 <GitIcon />
-                <span className={styles.topBarBrandName}>Prompt2Git</span>
+                <span className={styles.topBarBrandName}>GitSpeak</span>
               </div>
             )}
             <span className={styles.topBarHint}>Describe lo que quieres hacer con Git</span>
@@ -212,6 +240,15 @@ export default function AppPage() {
               onClick={() => toggleTweak('eduMode')}
             >
               <MortarboardIcon /> Modo Educativo
+            </button>
+
+            <button
+              type="button"
+              className={styles.themeBtn}
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            >
+              {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
             </button>
 
             <div ref={tweaksRef} className={styles.tweaksWrapper}>
@@ -227,17 +264,14 @@ export default function AppPage() {
                 <TweaksPanel
                   tweaks={tweaks}
                   onChange={toggleTweak}
-                  // TODO(Fase 1): redirigir a /login en lugar de eliminar la key cuando auth esté activo
-                  onChangeKey={() => setShowTweaks(false)}
+                  onLogout={handleLogout}
                 />
               )}
             </div>
           </div>
         </header>
 
-        {/* Content */}
         <div className={styles.content}>
-          {/* Input card */}
           <div className={`${styles.inputCard} ${error ? styles.hasError : ''}`}>
             <div className={styles.inputRow}>
               <span className={styles.inputPrompt} aria-hidden>$</span>
@@ -279,7 +313,6 @@ export default function AppPage() {
             </div>
           </div>
 
-          {/* Result or empty state */}
           {result ? (
             <ResultCard result={result} eduMode={eduMode} />
           ) : (

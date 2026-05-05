@@ -1,4 +1,4 @@
-export type Provider = 'anthropic' | 'openai' | 'gemini'
+export type Provider = 'anthropic' | 'openai' | 'gemini' | 'groq' | 'mistral' | 'openrouter'
 
 export interface ExplanationItem {
   what: string
