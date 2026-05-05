@@ -15,7 +15,9 @@ Herramienta web que traduce descripciones en español a comandos Git usando el m
 | Base de datos | Supabase Postgres + RLS |
 | Cifrado de keys | Supabase Vault |
 | Deploy | Vercel |
-| AI Providers | Anthropic, OpenAI, Google Gemini |
+| AI Providers | Anthropic, OpenAI, Gemini, Groq, Mistral, OpenRouter |
+| Cache semántico | pgvector (Supabase) — threshold 0.92 |
+| Rate limiting | 50 req/día por usuario, headers estándar |
 | Estilos | CSS custom properties (sin Tailwind, sin CSS-in-JS) |
 
 ---
@@ -120,7 +122,7 @@ npm run dev
 |---------|------|-------------|
 | `id` | uuid | PK |
 | `user_id` | uuid | FK → auth.users |
-| `provider` | text | `anthropic` \| `openai` \| `gemini` |
+| `provider` | text | `anthropic` \| `openai` \| `gemini` \| `groq` \| `mistral` \| `openrouter` |
 | `model` | text | Modelo preferido |
 | `vault_id` | uuid | Referencia al secreto en Supabase Vault |
 | `created_at` | timestamptz | — |
@@ -136,6 +138,7 @@ npm run dev
 | `flags` | jsonb | Array de `{flag, meaning}` |
 | `provider` | text | Proveedor usado |
 | `model` | text | Modelo usado |
+| `embedding` | vector(1536) | Embedding para cache semántico (pgvector) |
 | `created_at` | timestamptz | — |
 
 ---
@@ -155,6 +158,9 @@ npm run dev
 | Anthropic | `claude-haiku-4-5-20251001` | console.anthropic.com |
 | OpenAI | `gpt-4o-mini` | platform.openai.com |
 | Google Gemini | `gemini-1.5-flash` | aistudio.google.com |
+| Groq | `llama-3.1-8b-instant` | console.groq.com |
+| Mistral | `mistral-small-latest` | console.mistral.ai |
+| OpenRouter | `meta-llama/llama-3.1-8b-instruct:free` | openrouter.ai |
 
 ---
 
@@ -172,7 +178,16 @@ Paleta:
 
 ## Roadmap
 
-Ver [ROADMAP.md](./ROADMAP.md) para el plan de fases completo.
+| Fase | Objetivo | Estado |
+|------|----------|--------|
+| 0 — MVP | Auth, traducción NL→Git, historial, multi-provider, landing | ✅ |
+| 1 — Escala | Cache semántico pgvector + rate limiting | ✅ |
+| 2 — Contexto | GitHub read-only + "Fix my repo" | 🔄 |
+| 3 — Distribución | VS Code Extension | ⬜ |
+| 4 — Retención | Memory layer + quick actions | ⬜ |
+| 5 — Monetización | Freemium + pricing page | ⬜ |
+
+Ver [PROMPT2GIT.md](./PROMPT2GIT.md) para el plan de fases completo.
 
 ---
 

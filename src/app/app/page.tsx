@@ -82,6 +82,8 @@ export default function AppPage() {
   const [tweaks, setTweaks]           = useState<TweaksState>({ showSidebar: true, eduMode: false })
   const [showTweaks, setShowTweaks]   = useState(false)
   const [theme, setTheme]             = useState<'dark' | 'light'>('dark')
+  const [queriesLeft, setQueriesLeft] = useState<number | null>(null)
+  const [rateLimitReset, setRateLimitReset] = useState<string | null>(null)
 
   const inputRef    = useRef<HTMLTextAreaElement>(null)
   const tweaksRef   = useRef<HTMLDivElement>(null)
@@ -178,13 +180,21 @@ export default function AppPage() {
       })
 
       if (!res.ok) {
-        const body = await res.json().catch(() => ({})) as { error?: string }
+        const body = await res.json().catch(() => ({})) as { error?: string; remaining?: number; reset_at?: string }
         if (body.error === 'not_git') {
           setError('Esta instrucción no parece estar relacionada con Git.')
           return
         }
+        if (body.error === 'rate_limit') {
+          setRateLimitReset(body.reset_at ?? null)
+          setQueriesLeft(0)
+          return
+        }
         throw new Error(body.error ?? `Error ${res.status}`)
       }
+
+      const remaining = res.headers.get('X-RateLimit-Remaining')
+      if (remaining !== null) setQueriesLeft(Number(remaining))
 
       const data = await res.json() as { command: Command }
 
@@ -198,6 +208,7 @@ export default function AppPage() {
       setActiveId(data.command.id)
       setInput('')
       setCharCount(0)
+      setRateLimitReset(null)
 
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Ocurrió un error. Intenta de nuevo.'
@@ -272,7 +283,16 @@ export default function AppPage() {
         </header>
 
         <div className={styles.content}>
-          <div className={`${styles.inputCard} ${error ? styles.hasError : ''}`}>
+          {rateLimitReset && (
+            <div className={styles.rateLimitBanner}>
+              <span className={styles.rateLimitIcon}>⚡</span>
+              <div className={styles.rateLimitText}>
+                <strong>Límite diario alcanzado</strong>
+                <span>Se reinicia a las {new Date(rateLimitReset).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
+            </div>
+          )}
+          <div className={`${styles.inputCard} ${error ? styles.hasError : ''} ${rateLimitReset ? styles.disabled : ''}`}>
             <div className={styles.inputRow}>
               <span className={styles.inputPrompt} aria-hidden>$</span>
               <textarea
@@ -282,7 +302,7 @@ export default function AppPage() {
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 placeholder={PLACEHOLDERS[placeholderIdx]}
-                disabled={loading}
+                disabled={loading || !!rateLimitReset}
                 rows={3}
                 aria-label="Describe la acción de Git en lenguaje natural"
               />
@@ -292,7 +312,9 @@ export default function AppPage() {
               <span>
                 {error
                   ? <span className={styles.inputError}>{error}</span>
-                  : <span className={styles.inputHint}>⌘↵ para generar</span>
+                  : queriesLeft !== null && queriesLeft <= 10
+                    ? <span className={styles.inputWarning}>⚠ {queriesLeft} queries restantes hoy</span>
+                    : <span className={styles.inputHint}>⌘↵ para generar</span>
                 }
               </span>
               <div className={styles.inputFooterRight}>
@@ -303,7 +325,7 @@ export default function AppPage() {
                   type="button"
                   className={styles.generateBtn}
                   onClick={handleGenerate}
-                  disabled={loading || !input.trim()}
+                  disabled={loading || !input.trim() || !!rateLimitReset}
                 >
                   {loading ? (
                     <><span className={styles.spinner} /> Generando…</>

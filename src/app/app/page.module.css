@@ -121,6 +121,51 @@
   color: var(--accent);
 }
 
+/* ─── Rate limit banner ────────────────────── */
+
+.rateLimitBanner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: oklch(0.65 0.20 22 / 0.08);
+  border: 1px solid oklch(0.65 0.20 22 / 0.35);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  animation: fadeIn 0.2s ease both;
+}
+
+.rateLimitIcon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.rateLimitText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rateLimitText strong {
+  font-size: 13px;
+  color: var(--red);
+  font-weight: 600;
+}
+
+.rateLimitText span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.inputCard.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.inputWarning {
+  font-size: 12px;
+  color: var(--amber);
+}
+
 /* ─── Content ──────────────────────────────── */
 
 .content {

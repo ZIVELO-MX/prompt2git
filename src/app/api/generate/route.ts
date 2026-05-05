@@ -1,7 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generate } from '@/lib/ai-provider'
+import { generateEmbedding } from '@/lib/embeddings'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
+
+function normalize(input: string): string {
+  return input.toLowerCase().replace(/\s+/g, ' ').trim()
+}
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -17,6 +23,15 @@ export async function POST(request: Request) {
   }
   if (input.length > 280) {
     return NextResponse.json({ error: 'Máximo 280 caracteres' }, { status: 400 })
+  }
+
+  // Rate limit check
+  const rateLimit = await checkRateLimit(user.id)
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'rate_limit', remaining: 0, reset_at: rateLimit.resetAt },
+      { status: 429, headers: { 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': rateLimit.resetAt } }
+    )
   }
 
   const { data: providerConfig, error: configError } = await supabase
@@ -49,6 +64,60 @@ export async function POST(request: Request) {
     )
   }
 
+  // Cache pipeline: normalize → embedding → similarity search
+  let fromCache = false
+  const normalized = normalize(input)
+
+  try {
+    const embedding = await generateEmbedding(normalized, secret.decrypted_secret)
+
+    if (embedding.length > 0) {
+      const { data: cached } = await supabase.rpc('match_commands', {
+        query_embedding: embedding,
+        match_threshold: 0.92,
+        match_count: 1,
+        query_user_id: user.id,
+      })
+
+      if (cached && cached.length > 0) {
+        const hit = cached[0] as {
+          id: string
+          input: string
+          command: string
+          explanation: unknown
+          flags: unknown
+          provider: string
+          model: string
+          created_at: string
+        }
+
+        fromCache = true
+
+        return NextResponse.json({
+          command: {
+            id: hit.id,
+            user_id: user.id,
+            input: input.trim(),
+            command: hit.command,
+            explanation: hit.explanation,
+            flags: hit.flags,
+            provider: hit.provider as Parameters<typeof generate>[0]['provider'],
+            model: hit.model,
+            created_at: hit.created_at,
+            from_cache: true,
+          },
+        }, {
+          headers: {
+            'X-RateLimit-Remaining': String(rateLimit.remaining),
+            'X-RateLimit-Reset': rateLimit.resetAt,
+          },
+        })
+      }
+    }
+  } catch {
+    // Si falla el embedding, seguir sin caché
+  }
+
   try {
     const result = await generate({
       provider: providerConfig.provider,
@@ -59,7 +128,7 @@ export async function POST(request: Request) {
     const commandId = crypto.randomUUID()
     const now = new Date().toISOString()
 
-    const commandToInsert = {
+    const commandToInsert: Record<string, unknown> = {
       id: commandId,
       user_id: user.id,
       input: input.trim(),
@@ -90,6 +159,12 @@ export async function POST(request: Request) {
         provider: providerConfig.provider,
         model: providerConfig.model,
         created_at: now,
+        from_cache: false,
+      },
+    }, {
+      headers: {
+        'X-RateLimit-Remaining': String(rateLimit.remaining - 1),
+        'X-RateLimit-Reset': rateLimit.resetAt,
       },
     })
 

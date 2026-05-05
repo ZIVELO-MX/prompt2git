@@ -76,6 +76,8 @@ const PROVIDERS: ProviderMeta[] = [
   },
 ]
 
+import { SettingsIcon } from '@/components/ui/icons'
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ConnectedKey {
@@ -266,31 +268,39 @@ export default function SettingsPage() {
         <Link href="/app" className={styles.backBtn}>
           ← Volver al app
         </Link>
-        <h1 className={styles.title}>Configuración</h1>
-        <p className={styles.subtitle}>
-          Conecta la API key del proveedor de IA que prefieras. Tu clave se cifra con Supabase Vault
-          y nunca es accesible fuera del servidor.
-        </p>
+        <div className={styles.headerRow}>
+          <div className={styles.headerIcon}>
+            <SettingsIcon />
+          </div>
+          <div className={styles.headerContent}>
+            <h1 className={styles.title}>Configuración</h1>
+            <p className={styles.subtitle}>
+              Tus API keys se cifran con Supabase Vault y nunca salen del servidor.
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className={styles.section}>
         <span className={styles.sectionLabel}>PROVEEDORES DE IA</span>
-        {PROVIDERS.map(meta => (
-          <ProviderCard
-            key={meta.id}
-            meta={meta}
-            connected={connectedKeys.find(k => k.provider === meta.id) ?? null}
-            onSave={handleSave}
-            onRemove={handleRemove}
-          />
-        ))}
-        <div className={styles.lowCostNote}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="16" x2="12" y2="12"/>
-            <line x1="12" y1="8" x2="12.01" y2="8"/>
-          </svg>
-          <span>Cada solicitud se procesa en el modelo de <strong>bajo consumo</strong> de cada proveedor (ej. Claude Haiku, GPT-4o-mini, Gemini Flash), lo que garantiza respuestas rápidas y económicas. Puedes cambiar el modelo en la configuración de cada proveedor.</span>
+        <div className={styles.providersGrid}>
+          {PROVIDERS.map(meta => (
+            <ProviderCard
+              key={meta.id}
+              meta={meta}
+              connected={connectedKeys.find(k => k.provider === meta.id) ?? null}
+              onSave={handleSave}
+              onRemove={handleRemove}
+            />
+          ))}
+          <div className={styles.lowCostNote}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            <span>Cada solicitud se procesa en el modelo de <strong>bajo consumo</strong> de cada proveedor (ej. Claude Haiku, GPT-4o-mini, Gemini Flash), lo que garantiza respuestas rápidas y económicas. Puedes cambiar el modelo en la configuración de cada proveedor.</span>
+          </div>
         </div>
       </div>
     </div>

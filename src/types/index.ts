@@ -20,6 +20,7 @@ export interface Command {
   provider: Provider
   model: string
   created_at: string
+  from_cache?: boolean
 }
 
 export interface ProviderKey {
