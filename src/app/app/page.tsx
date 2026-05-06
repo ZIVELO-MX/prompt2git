@@ -7,6 +7,7 @@ import { ResultCard } from '@/components/result-card'
 import Link from 'next/link'
 import { GitIcon, MortarboardIcon, SettingsIcon, SunIcon, MoonIcon } from '@/components/ui/icons'
 import { Onboarding } from '@/components/onboarding'
+import { PricingModal } from '@/components/pricing-modal'
 import styles from './page.module.css'
 
 const PLACEHOLDERS = [
@@ -81,6 +82,7 @@ export default function AppPage() {
   const [placeholderIdx, setPlaceholderIdx] = useState(0)
   const [tweaks, setTweaks]           = useState<TweaksState>({ showSidebar: true, eduMode: false })
   const [showTweaks, setShowTweaks]   = useState(false)
+  const [showPricing, setShowPricing] = useState(false)
   const [theme, setTheme]             = useState<'dark' | 'light'>('dark')
   const [queriesLeft, setQueriesLeft] = useState<number | null>(null)
   const [rateLimitReset, setRateLimitReset] = useState<string | null>(null)
@@ -255,6 +257,14 @@ export default function AppPage() {
 
             <button
               type="button"
+              className={styles.planesBtn}
+              onClick={() => setShowPricing(true)}
+            >
+              Planes
+            </button>
+
+            <button
+              type="button"
               className={styles.themeBtn}
               onClick={toggleTheme}
               title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
@@ -290,6 +300,13 @@ export default function AppPage() {
                 <strong>Límite diario alcanzado</strong>
                 <span>Se reinicia a las {new Date(rateLimitReset).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
+              <button
+                type="button"
+                className={styles.rateLimitUpgradeBtn}
+                onClick={() => setShowPricing(true)}
+              >
+                Ver planes →
+              </button>
             </div>
           )}
           <div className={`${styles.inputCard} ${error ? styles.hasError : ''} ${rateLimitReset ? styles.disabled : ''}`}>
@@ -362,6 +379,8 @@ export default function AppPage() {
           )}
         </div>
       </main>
+
+      <PricingModal open={showPricing} onClose={() => setShowPricing(false)} />
     </div>
   )
 }

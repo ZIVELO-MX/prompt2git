@@ -121,6 +121,27 @@
   color: var(--accent);
 }
 
+.planesBtn {
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.01em;
+}
+.planesBtn:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* ─── Rate limit banner ────────────────────── */
 
 .rateLimitBanner {
@@ -154,6 +175,26 @@
 .rateLimitText span {
   font-size: 12px;
   color: var(--text-muted);
+}
+
+.rateLimitUpgradeBtn {
+  margin-left: auto;
+  flex-shrink: 0;
+  background: var(--accent);
+  color: oklch(0.11 0.01 240);
+  border: none;
+  border-radius: 7px;
+  padding: 6px 14px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+.rateLimitUpgradeBtn:hover {
+  box-shadow: 0 0 20px var(--accent-glow);
+  transform: translateY(-1px);
 }
 
 .inputCard.disabled {
