@@ -1,0 +1,35 @@
+.strip {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 30px; padding: 0 28px;
+  background: var(--accent-dim);
+  border-bottom: 1px solid oklch(0.75 0.22 142 / 0.2);
+  flex-shrink: 0;
+  animation: slideDown 0.2s ease;
+}
+@keyframes slideDown { from { opacity: 0; height: 0 } to { opacity: 1; height: 30px } }
+
+.left { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; }
+.gitIcon { color: var(--accent); flex-shrink: 0; }
+.repoPath { font-family: var(--font-mono); font-size: 11.5px; font-weight: 600; color: var(--accent); white-space: nowrap; }
+.sep { font-size: 11px; color: oklch(0.75 0.22 142 / 0.5); flex-shrink: 0; }
+.branch {
+  font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary);
+  background: oklch(0.75 0.22 142 / 0.12); border: 1px solid oklch(0.75 0.22 142 / 0.2);
+  padding: 1px 6px; border-radius: 4px; white-space: nowrap;
+}
+.commit {
+  font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px;
+}
+.prBadge {
+  font-family: var(--font-mono); font-size: 10px; color: var(--amber);
+  background: var(--amber-dim); border: 1px solid oklch(0.78 0.18 72 / 0.3);
+  padding: 1px 6px; border-radius: 4px; white-space: nowrap; flex-shrink: 0;
+}
+.dismissBtn {
+  flex-shrink: 0; background: transparent; border: none;
+  font-size: 10.5px; color: oklch(0.75 0.22 142 / 0.6);
+  cursor: pointer; padding: 2px 4px;
+  transition: color 0.15s; font-family: var(--font-sans);
+}
+.dismissBtn:hover { color: var(--accent); }
