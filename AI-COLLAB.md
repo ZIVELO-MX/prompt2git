@@ -25,6 +25,28 @@ Todas las tareas C-01 a C-14 y O-01 a O-12 terminadas. Cache semántico con pgve
 
 ---
 
+## Tareas QA — Pre-Fase 2 (feedback de QA)
+
+### Claude ✅ completadas
+
+| # | Tarea | Estado |
+|---|-------|--------|
+| QC-01 | Pricing page `/pricing` — convertir `Pricing Details.html` a Next.js App Router. Billing toggle mensual/anual, tabla comparativa, FAQ acordeón, footer con contact@zivelo.dev. | ✅ done |
+| QC-02 | PricingModal component — `src/components/pricing-modal/index.tsx`. Modal React con backdrop, 3 planes, toggle de billing. Se activa desde la app vía `open/onClose` props. | ✅ done |
+| QC-03 | Landing navbar — agregar link "Pricing" → `/pricing` + `LandingThemeToggle` (toggle tema claro/oscuro, detecta system preference, persiste en localStorage). | ✅ done |
+| QC-04 | Landing footer — agregar `contact@zivelo.dev` como link mailto. | ✅ done |
+| QC-05 | Modo Educativo — badge "GRATIS · LIMITADO" en la feature card de la landing. Placeholder visual para futura restricción de plan. | ✅ done |
+
+### Opencode ⬜ pendientes
+
+| # | Tarea | Estado |
+|---|-------|--------|
+| QO-01 | **`.env` validación** — agregar validación de variables de entorno al arranque de la app (en `src/lib/env.ts` o similar). Usar Zod o validación manual. Separar claramente qué vars son server-only (`SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`) vs client-safe (`NEXT_PUBLIC_*`). Lanzar error descriptivo si falta alguna obligatoria. | ⬜ pendiente |
+| QO-02 | **i18n para respuestas AI** — agregar parámetro `lang?: 'es' \| 'en'` a `/api/generate`. Si `lang=en`, adaptar el system prompt para responder en inglés. Default: español. El cliente puede enviar el idioma según preferencia guardada en localStorage. | ⬜ pendiente |
+| QO-03 | **Documentación frontend** — crear `docs/FRONTEND.md`. Describir módulos: Landing (`/`), App (`/app`), Settings (`/app/settings`). Incluir: estructura de componentes por vista, flujo UI→acción→resultado, decisiones de diseño UX importantes. Excluir lógica backend detallada. | ⬜ pendiente |
+
+---
+
 ## Tareas activas — Fase 2
 
 ### Claude

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { HowItWorks } from '@/components/landing/how-it-works'
+import { LandingThemeToggle } from '@/components/landing/theme-toggle'
 import styles from './page.module.css'
 
 export default function LandingPage() {
@@ -24,8 +25,12 @@ export default function LandingPage() {
             <li><a href="#como-funciona">Cómo funciona</a></li>
             <li><a href="#features">Features</a></li>
             <li><a href="#comparativa">Comparativa</a></li>
+            <li><Link href="/pricing">Pricing</Link></li>
           </ul>
+          <div className={styles.navActions}>
+            <LandingThemeToggle />
             <a href="/login" className={styles.navCta}>Empezar ahora →</a>
+          </div>
         </div>
       </nav>
 
@@ -191,7 +196,10 @@ export default function LandingPage() {
                   <path d="M6 9v4c0 0 1.5 2 4 2s4-2 4-2V9" stroke="oklch(0.72 0.16 240)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
-              <div className={styles.featTitle}>Modo Educativo</div>
+              <div className={styles.featTitleRow}>
+                <div className={styles.featTitle}>Modo Educativo</div>
+                <span className={styles.featBadgeFree}>GRATIS · LIMITADO</span>
+              </div>
               <p className={styles.featText}>Activa el modo educativo y aprende el significado de cada flag con tooltips interactivos. Ideal para juniors.</p>
             </div>
 
@@ -394,6 +402,7 @@ export default function LandingPage() {
               </div>
               <div className={styles.footerDivider} />
               <ul className={styles.footerLinks}>
+                <li><a href="mailto:contact@zivelo.dev">contact@zivelo.dev</a></li>
                 <li><a href="#">Privacidad</a></li>
                 <li><a href="#">Términos</a></li>
                 <li><Link href="/app">App →</Link></li>
