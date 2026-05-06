@@ -53,9 +53,9 @@ Todas las tareas C-01 a C-14 y O-01 a O-12 terminadas. Cache semántico con pgve
 
 | # | Tarea | Estado |
 |---|-------|--------|
-| C-15 | Repo picker en `/app/settings` — UI para elegir repo activo. Llama `/api/github/repos`. Guarda `{ owner, repo, branch }` en localStorage. | ✅ done |
+| C-15 | Repo picker en `/app/settings` — UI para elegir repo activo. Llama `GET /api/github/repos`. Guarda `{ owner, repo, branch }` en localStorage. | ✅ done |
 | C-16 | Context strip en app — barra sutil bajo el topbar: `owner/repo @ branch` + último commit. Se oculta si no hay repo conectado. | ✅ done |
-| C-17 | "Fix my repo" mode — toggle en InputCard entre modo normal y modo Fix. Modo Fix: textarea para pegar `git status` + descripción del problema. | ✅ done |
+| C-17 | "Fix my repo" mode — toggle en InputCard entre modo normal y modo Fix. Modo Fix: textarea para pegar `git status` + descripción del problema. Llama `POST /api/github/fix`. | ✅ done |
 | C-18 | ResultCard multi-comando — cuando la respuesta tiene una secuencia de comandos, mostrarlos como pasos numerados con botón Copiar por paso. | ✅ done |
 
 ### Opencode
@@ -131,7 +131,19 @@ Todas las tareas C-01 a C-14 y O-01 a O-12 terminadas. Cache semántico con pgve
 - **i18n UI**: `src/lib/i18n.ts` con diccionario es/en. `t(key, lang, vars?)` para lookup. Aplicado en `/app` (placeholders, botones, labels, errores, banner). Selector de idioma en TweaksPanel. Persiste en `localStorage.p2g_lang`.
 
 ### Para Claude
-- **C-15**: el repo picker solo aparece si el usuario tiene GitHub conectado (verificar con GET `/api/github/repos`). Si no está conectado, mostrar "Conectar GitHub" que redirige al login con `?provider=github`.
-- **C-16**: el context strip debe ser no intrusivo — altura máx 32px, dismissible por sesión (localStorage). Si el repo no está conectado, no renderizar nada.
-- **C-17**: el toggle Fix/Normal cambia el placeholder y añade el segundo textarea. El botón "Generar" llama `/api/github/fix` en modo Fix y `/api/generate` en modo normal.
-- **C-18**: el tipo `Command` necesita campo opcional `steps?: Step[]` para el multi-comando. Si `steps` existe, `ResultCard` renderiza lista numerada en lugar del bloque único.
+
+**⚠️ Pasos de infra pendientes antes de que funcione GitHub:**
+1. Aplicar `supabase/migrations/005_github.sql` en Supabase SQL Editor (crea tabla `github_connections`)
+2. Configurar GitHub OAuth en Supabase Dashboard → Authentication → Providers → GitHub (crear OAuth App en GitHub Settings → Developer settings primero)
+3. En la GitHub OAuth App, la callback URL debe ser `https://<project>.supabase.co/auth/v1/callback`
+
+**Frontend tasks pendientes:**
+- **C-15**: Repo picker en `/app/settings`. GET `/api/github/repos`. Si `{ error: 'github_not_connected' }`, mostrar "Conectar GitHub" → redirige a login con `?provider=github`. Guardar `{ owner, repo, branch }` en localStorage.
+- **C-16**: Context strip bajo topbar en `/app`. Altura máx 32px. Muestra `owner/repo @ branch` + último commit. Dismissible por sesión (localStorage). No renderizar si no hay repo conectado.
+- **C-17**: Toggle Fix/Normal en InputCard. Modo Fix: textarea para `git status` + descripción. Llama `POST /api/github/fix`. El resultado (`{ steps }`) se puede mostrar con el multi-comando de C-18.
+- **C-18**: `ResultCard` debe renderizar lista numerada si `result` tiene `steps`. Botón Copiar por paso.
+
+**Nota de Opencode:**
+- Backend listo (O-13 a O-17 completados + QA QO-01 a QO-03 + FE-01/02 feedback)
+- Se agregó `ClockIcon` a `src/components/ui/icons.tsx` y se reemplazó en features de landing
+- `src/lib/i18n.ts` con `t(key, lang, vars?)` para UI bilingüe. Aplicado en `/app`. Selector de idioma en TweaksPanel.

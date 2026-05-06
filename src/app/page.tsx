@@ -30,7 +30,7 @@ export default function LandingPage() {
           </ul>
           <div className={styles.navActions}>
             <LandingThemeToggle />
-            <a href="/login" className={styles.navCta}>Empezar ahora →</a>
+            <a href="/login" className={styles.navCta}>Empieza ahora →</a>
           </div>
         </div>
       </nav>
@@ -58,7 +58,7 @@ export default function LandingPage() {
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M8 2l5 5-5 5M3 7h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                Empezar ahora
+                Empieza ahora
               </a>
               <a href="/app" className={styles.btnGhost}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -361,7 +361,7 @@ export default function LandingPage() {
               <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
                 <path d="M8 2l5 5-5 5M3 7h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              Empezar ahora — es gratis
+              Empieza ahora — es gratis
             </a>
             <p className={styles.ctaNote} style={{ marginTop: 16 }}>Sin registro complicado · Magic Link o GitHub · 20 comandos gratis al mes · IA incluida</p>
           </div>

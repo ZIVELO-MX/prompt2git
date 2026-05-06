@@ -18,7 +18,7 @@ const PLANS = [
     monthly: '0',
     yearly: '0',
     note: 'Siempre gratis',
-    cta: 'Empezar gratis',
+    cta: 'Empieza gratis',
     ctaStyle: 'ghost' as const,
     features: [
       { text: '20 comandos por mes', highlight: false },
@@ -38,7 +38,7 @@ const PLANS = [
     yearly: '7',
     note: 'Facturado mensualmente',
     noteYearly: 'Facturado anualmente · ahorras $24',
-    cta: 'Empezar con Pro',
+    cta: 'Empieza con Pro',
     ctaStyle: 'primary' as const,
     featured: true,
     tag: 'MÁS POPULAR',
