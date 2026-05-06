@@ -37,3 +37,34 @@ export interface GenerateResult {
   explanation: ExplanationItem[]
   flags: Flag[]
 }
+
+export interface GitHubConnection {
+  id: string
+  user_id: string
+  username: string
+  connected_at: string
+}
+
+export interface GitHubRepo {
+  owner: string
+  name: string
+  default_branch: string
+  private: boolean
+}
+
+export interface GitHubContext {
+  branch: string
+  last_commit: string
+  open_prs_count: number
+}
+
+export interface FixStep {
+  order: number
+  command: string
+  risk: 'low' | 'medium' | 'high'
+  description: string
+}
+
+export interface FixResult {
+  steps: FixStep[]
+}

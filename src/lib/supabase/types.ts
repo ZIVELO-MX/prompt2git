@@ -75,6 +75,30 @@ export type Database = {
         }
         Relationships: []
       }
+      github_connections: {
+        Row: {
+          connected_at: string
+          id: string
+          user_id: string
+          username: string
+          vault_id: string
+        }
+        Insert: {
+          connected_at?: string
+          id?: string
+          user_id: string
+          username: string
+          vault_id: string
+        }
+        Update: {
+          connected_at?: string
+          id?: string
+          user_id?: string
+          username?: string
+          vault_id?: string
+        }
+        Relationships: []
+      }
       provider_keys: {
         Row: {
           created_at: string

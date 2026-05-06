@@ -1,9 +1,11 @@
-import type { Provider, GenerateResult } from '@/types'
+import type { Provider, GenerateResult, FixResult } from '@/types'
 
 export interface ProviderConfig {
   provider: Provider
   apiKey: string
   model: string
+  lang?: 'es' | 'en'
+  repoContext?: { branch: string; last_commit: string }
 }
 
 const MODELS: Record<Provider, string> = {
@@ -24,21 +26,26 @@ const OPENAI_COMPAT_ENDPOINTS: Partial<Record<Provider, string>> = {
 
 export const DEFAULT_MODELS = MODELS
 
-function buildPrompt(input: string): string {
-  return `You are a Git expert assistant. The user will describe a Git action in natural language (in Spanish).
+function buildPrompt(input: string, lang: 'es' | 'en' = 'es', repoContext?: { branch: string; last_commit: string }): string {
+  const isEn = lang === 'en'
+  const repoInfo = repoContext
+    ? `\n\nEl usuario está en la rama \`${repoContext.branch}\`. Último commit: \`${repoContext.last_commit}\`.`
+    : ''
+
+  return `You are a Git expert assistant. The user will describe a Git action in natural language (${isEn ? 'in English' : 'in Spanish'}).
 
 Your task:
 1. Translate the description into the most appropriate Git command
-2. Provide a 3-part explanation in Spanish
-3. List all flags/arguments in the command with their meanings in Spanish
+2. Provide a 3-part explanation ${isEn ? 'in English' : 'in Spanish'}
+3. List all flags/arguments in the command with their meanings ${isEn ? 'in English' : 'in Spanish'}
 
 Respond with ONLY valid JSON in this exact format:
 {
   "command": "git <command>",
   "explanation": [
-    { "what": "¿Qué hace?", "text": "..." },
-    { "what": "¿Cómo funciona?", "text": "..." },
-    { "what": "¿Por qué usarlo?", "text": "..." }
+    { "what": "${isEn ? 'What does it do?' : '¿Qué hace?'}", "text": "..." },
+    { "what": "${isEn ? 'How does it work?' : '¿Cómo funciona?'}", "text": "..." },
+    { "what": "${isEn ? 'Why use it?' : '¿Por qué usarlo?'}", "text": "..." }
   ],
   "flags": [
     { "flag": "--flag-name", "meaning": "..." }
@@ -47,12 +54,12 @@ Respond with ONLY valid JSON in this exact format:
 
 Rules:
 - Only include flags/arguments that actually appear in the command
-- All explanation text and flag meanings must be in Spanish
+- All explanation text and flag meanings must be ${isEn ? 'in English' : 'in Spanish'}
 - command must be a syntactically correct git command
 - If the command has no flags or special arguments, return "flags": []
 - If the request is not related to Git version control, return: {"error": "not_git"}
 
-User request: "${input}"`
+User request: "${input}"${repoInfo}`
 }
 
 async function callAnthropic(config: ProviderConfig, prompt: string): Promise<string> {
@@ -137,7 +144,7 @@ function parseResponse(raw: string): GenerateResult {
 }
 
 export async function generate(config: ProviderConfig, input: string): Promise<GenerateResult> {
-  const prompt = buildPrompt(input)
+  const prompt = buildPrompt(input, config.lang ?? 'es', config.repoContext)
   let raw: string
 
   switch (config.provider) {
@@ -151,4 +158,71 @@ export async function generate(config: ProviderConfig, input: string): Promise<G
   }
 
   return parseResponse(raw)
+}
+
+function buildFixPrompt(gitStatus: string, problemDescription: string, lang: 'es' | 'en'): string {
+  const isEn = lang === 'en'
+
+  return `You are a Git expert assistant specialized in diagnosing and fixing repository issues.
+
+The user has provided their current git status and a description of the problem they are facing.
+
+Git status:
+\`\`\`
+${gitStatus}
+\`\`\`
+
+Problem description: "${problemDescription}"
+
+Your task is to analyze the situation and provide a step-by-step plan to fix it. Each step should be a single git command ordered by risk.
+
+Respond with ONLY valid JSON in this exact format:
+{
+  "steps": [
+    {
+      "order": 1,
+      "command": "git <command>",
+      "risk": "low",
+      "description": "${isEn ? 'Clear explanation of what this step does' : 'Explicación clara de lo que hace este paso'}"
+    }
+  ]
+}
+
+Risk levels:
+- "low": Safe operations that don't lose data (stash, log, status, diff, checkout file, reset --soft)
+- "medium": Operations that modify history or require force (rebase, reset --mixed, commit --amend)
+- "high": Destructive operations that can lose data (reset --hard, push --force, branch -D)
+
+Rules:
+- Order steps from lowest risk to highest risk
+- Try to solve the problem with the safest approach first
+- Each command must be a syntactically correct git command
+- ${isEn ? 'All descriptions must be in English' : 'Todas las descripciones deben estar en español'}
+- If the request is not related to Git version control, return: {"error": "not_git"}
+- If there is no clear fix, suggest the safest diagnostic step first`
+}
+
+function parseFixResponse(raw: string): FixResult {
+  const match = raw.match(/\{[\s\S]*\}/)
+  if (!match) throw new Error('Formato de respuesta inválido')
+  const parsed = JSON.parse(match[0]) as { error?: string } & FixResult
+  if (parsed.error === 'not_git') throw new Error('not_git')
+  return { steps: parsed.steps ?? [] }
+}
+
+export async function generateFix(config: ProviderConfig, gitStatus: string, problemDescription: string): Promise<FixResult> {
+  const prompt = buildFixPrompt(gitStatus, problemDescription, config.lang ?? 'es')
+  let raw: string
+
+  switch (config.provider) {
+    case 'anthropic':  raw = await callAnthropic(config, prompt);    break
+    case 'openai':
+    case 'groq':
+    case 'mistral':
+    case 'openrouter': raw = await callOpenAICompat(config, prompt); break
+    case 'gemini':     raw = await callGemini(config, prompt);       break
+    default: throw new Error(`Proveedor no soportado: ${config.provider}`)
+  }
+
+  return parseFixResponse(raw)
 }

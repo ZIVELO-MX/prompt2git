@@ -87,6 +87,12 @@
 }
 .navLinks a { font-size: 13.5px; color: var(--text-secondary); transition: color 0.15s; }
 .navLinks a:hover { color: var(--text-primary); }
+.navActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .navCta {
   background: var(--accent);
   color: oklch(0.11 0.01 240);
@@ -333,7 +339,18 @@
   display: flex; align-items: center; justify-content: center;
   margin-bottom: 20px;
 }
-.featTitle { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; }
+.featTitleRow { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.featTitle { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+.featBadgeFree {
+  font-family: var(--font-mono);
+  font-size: 9.5px; font-weight: 700;
+  letter-spacing: 0.07em;
+  padding: 2px 7px; border-radius: 4px;
+  background: var(--amber-dim);
+  color: var(--amber);
+  border: 1px solid oklch(0.78 0.18 72 / 0.3);
+  white-space: nowrap;
+}
 .featText { font-size: 13.5px; color: var(--text-secondary); line-height: 1.65; font-weight: 300; }
 .featCode {
   margin-top: 16px;

@@ -1,28 +1,21 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import type { Command, Provider } from '@/types'
+import type { Command, Provider, FixResult } from '@/types'
 import { Sidebar } from '@/components/sidebar'
 import { ResultCard } from '@/components/result-card'
 import Link from 'next/link'
 import { GitIcon, MortarboardIcon, SettingsIcon, SunIcon, MoonIcon } from '@/components/ui/icons'
 import { Onboarding } from '@/components/onboarding'
+import { PricingModal } from '@/components/pricing-modal'
+import { ContextStrip } from '@/components/context-strip'
+import { FixResultCard } from '@/components/fix-result-card'
+import { t, getStoredLang, setStoredLang } from '@/lib/i18n'
+import type { Lang } from '@/lib/i18n'
 import styles from './page.module.css'
 
-const PLACEHOLDERS = [
-  'deshacer el último commit sin perder cambios…',
-  'subir mi rama al remoto por primera vez…',
-  'ver solo los commits de la última semana…',
-  'fusionar dos ramas sin crear un merge commit…',
-  'guardar mis cambios temporalmente y limpiar…',
-]
-
-const SUGGESTIONS = [
-  'deshacer último commit',
-  'crear rama nueva',
-  'stash mis cambios',
-  'ver log compacto',
-]
+const PLACEHOLDER_KEYS = ['app.placeholder.0', 'app.placeholder.1', 'app.placeholder.2', 'app.placeholder.3', 'app.placeholder.4']
+const SUGGESTION_KEYS = ['app.suggestion.0', 'app.suggestion.1', 'app.suggestion.2', 'app.suggestion.3']
 
 interface TweaksState {
   showSidebar: boolean
@@ -31,18 +24,20 @@ interface TweaksState {
 
 interface TweaksPanelProps {
   tweaks: TweaksState
+  lang: Lang
   onChange: (key: keyof TweaksState) => void
+  onToggleLang: () => void
   onLogout: () => void
 }
 
-function TweaksPanel({ tweaks, onChange, onLogout }: TweaksPanelProps) {
+function TweaksPanel({ tweaks, lang, onChange, onToggleLang, onLogout }: TweaksPanelProps) {
   return (
     <div className={styles.tweaksPanel}>
-      <span className={styles.tweaksSectionLabel}>INTERFAZ</span>
+      <span className={styles.tweaksSectionLabel}>{t('tweaks.section.interface', lang)}</span>
 
       {(['showSidebar', 'eduMode'] as const).map(key => (
         <label key={key} className={styles.tweakRow}>
-          {key === 'showSidebar' ? 'Sidebar de historial' : 'Modo Educativo'}
+          {key === 'showSidebar' ? t('tweaks.label.sidebar', lang) : t('tweaks.label.edu_mode', lang)}
           <button
             type="button"
             className={`${styles.toggle} ${tweaks[key] ? styles.on : ''}`}
@@ -57,14 +52,18 @@ function TweaksPanel({ tweaks, onChange, onLogout }: TweaksPanelProps) {
         </label>
       ))}
 
-      <span className={styles.tweaksSectionDivider}>CUENTA</span>
+      <span className={styles.tweaksSectionDivider}>{t('tweaks.section.account', lang)}</span>
+
+      <button type="button" className={styles.langBtn} onClick={onToggleLang}>
+        {lang === 'es' ? '🇬🇧 English' : '🇪🇸 Español'}
+      </button>
 
       <Link href="/app/settings" className={styles.apiKeysLink}>
-        🔑 Configurar API keys
+        {t('tweaks.link.api_keys', lang)}
       </Link>
 
       <button type="button" className={styles.logoutBtn} onClick={onLogout}>
-        Cerrar sesión
+        {t('tweaks.button.logout', lang)}
       </button>
     </div>
   )
@@ -81,9 +80,18 @@ export default function AppPage() {
   const [placeholderIdx, setPlaceholderIdx] = useState(0)
   const [tweaks, setTweaks]           = useState<TweaksState>({ showSidebar: true, eduMode: false })
   const [showTweaks, setShowTweaks]   = useState(false)
+  const [showPricing, setShowPricing] = useState(false)
   const [theme, setTheme]             = useState<'dark' | 'light'>('dark')
   const [queriesLeft, setQueriesLeft] = useState<number | null>(null)
   const [rateLimitReset, setRateLimitReset] = useState<string | null>(null)
+  const [lang, setLang] = useState<Lang>('es')
+
+  const [fixMode, setFixMode]         = useState(false)
+  const [gitStatus, setGitStatus]     = useState('')
+  const [problemDesc, setProblemDesc] = useState('')
+  const [fixResult, setFixResult]     = useState<FixResult | null>(null)
+  const [fixLoading, setFixLoading]   = useState(false)
+  const [fixError, setFixError]       = useState<string | null>(null)
 
   const inputRef    = useRef<HTMLTextAreaElement>(null)
   const tweaksRef   = useRef<HTMLDivElement>(null)
@@ -94,6 +102,7 @@ export default function AppPage() {
       setTheme(saved)
       document.documentElement.setAttribute('data-theme', saved)
     }
+    setLang(getStoredLang())
   }, [])
 
   const toggleTheme = () => {
@@ -103,8 +112,14 @@ export default function AppPage() {
     document.documentElement.setAttribute('data-theme', next)
   }
 
+  const toggleLang = () => {
+    const next: Lang = lang === 'es' ? 'en' : 'es'
+    setLang(next)
+    setStoredLang(next)
+  }
+
   useEffect(() => {
-    const iv = setInterval(() => setPlaceholderIdx(i => (i + 1) % PLACEHOLDERS.length), 3500)
+    const iv = setInterval(() => setPlaceholderIdx(i => (i + 1) % PLACEHOLDER_KEYS.length), 3500)
     return () => clearInterval(iv)
   }, [])
 
@@ -167,7 +182,7 @@ export default function AppPage() {
   const handleGenerate = useCallback(async () => {
     const trimmed = input.trim()
     if (!trimmed || loading) return
-    if (trimmed.length > 280) { setError('Máximo 280 caracteres.'); return }
+    if (trimmed.length > 280) { setError(t('app.error.max_length', lang)); return }
 
     setLoading(true)
     setError(null)
@@ -182,7 +197,7 @@ export default function AppPage() {
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { error?: string; remaining?: number; reset_at?: string }
         if (body.error === 'not_git') {
-          setError('Esta instrucción no parece estar relacionada con Git.')
+          setError(t('app.error.not_git', lang))
           return
         }
         if (body.error === 'rate_limit') {
@@ -211,12 +226,36 @@ export default function AppPage() {
       setRateLimitReset(null)
 
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Ocurrió un error. Intenta de nuevo.'
+      const msg = e instanceof Error ? e.message : t('app.error.generic', lang)
       setError(msg)
     } finally {
       setLoading(false)
     }
-  }, [input, loading])
+  }, [input, loading, lang])
+
+  const handleFix = async () => {
+    if (!gitStatus.trim() || !problemDesc.trim() || fixLoading) return
+    setFixLoading(true)
+    setFixError(null)
+    setFixResult(null)
+    try {
+      const res = await fetch('/api/github/fix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ git_status: gitStatus.trim(), problem_desc: problemDesc.trim() }),
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string }
+        throw new Error(body.error ?? `Error ${res.status}`)
+      }
+      const data = await res.json() as FixResult
+      setFixResult(data)
+    } catch (e) {
+      setFixError(e instanceof Error ? e.message : t('app.error.generic', lang))
+    } finally {
+      setFixLoading(false)
+    }
+  }
 
   const { showSidebar, eduMode } = tweaks
 
@@ -241,7 +280,7 @@ export default function AppPage() {
                 <span className={styles.topBarBrandName}>GitSpeak</span>
               </div>
             )}
-            <span className={styles.topBarHint}>Describe lo que quieres hacer con Git</span>
+            <span className={styles.topBarHint}>{t('app.title', lang)}</span>
           </div>
 
           <div className={styles.topBarRight}>
@@ -250,14 +289,22 @@ export default function AppPage() {
               className={`${styles.eduBtn} ${eduMode ? styles.active : ''}`}
               onClick={() => toggleTweak('eduMode')}
             >
-              <MortarboardIcon /> Modo Educativo
+              <MortarboardIcon /> {t('app.edu_mode', lang)}
+            </button>
+
+            <button
+              type="button"
+              className={styles.planesBtn}
+              onClick={() => setShowPricing(true)}
+            >
+              {t('app.plans', lang)}
             </button>
 
             <button
               type="button"
               className={styles.themeBtn}
               onClick={toggleTheme}
-              title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+              title={theme === 'dark' ? t('app.theme.light', lang) : t('app.theme.dark', lang)}
             >
               {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
             </button>
@@ -267,14 +314,16 @@ export default function AppPage() {
                 type="button"
                 className={`${styles.settingsBtn} ${showTweaks ? styles.active : ''}`}
                 onClick={() => setShowTweaks(o => !o)}
-                title="Ajustes"
+                title={t('app.settings', lang)}
               >
                 <SettingsIcon />
               </button>
               {showTweaks && (
                 <TweaksPanel
                   tweaks={tweaks}
+                  lang={lang}
                   onChange={toggleTweak}
+                  onToggleLang={toggleLang}
                   onLogout={handleLogout}
                 />
               )}
@@ -282,86 +331,165 @@ export default function AppPage() {
           </div>
         </header>
 
+        <ContextStrip lang={lang} />
+
         <div className={styles.content}>
-          {rateLimitReset && (
+          <div className={styles.modeToggle}>
+            <button
+              type="button"
+              className={`${styles.modeTab} ${!fixMode ? styles.modeTabActive : ''}`}
+              onClick={() => { setFixMode(false); setFixResult(null) }}
+            >
+              {t('app.fix.normal_toggle', lang)}
+            </button>
+            <button
+              type="button"
+              className={`${styles.modeTab} ${fixMode ? styles.modeTabActive : ''}`}
+              onClick={() => { setFixMode(true); setResult(null) }}
+            >
+              🛠 {t('app.fix.toggle', lang)}
+            </button>
+          </div>
+
+          {!fixMode && rateLimitReset && (
             <div className={styles.rateLimitBanner}>
               <span className={styles.rateLimitIcon}>⚡</span>
               <div className={styles.rateLimitText}>
-                <strong>Límite diario alcanzado</strong>
-                <span>Se reinicia a las {new Date(rateLimitReset).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}</span>
+                <strong>{t('app.rate_limit.title', lang)}</strong>
+                <span>{t('app.rate_limit.resets_at', lang)}{new Date(rateLimitReset).toLocaleTimeString(lang === 'en' ? 'en' : 'es', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
+              <button
+                type="button"
+                className={styles.rateLimitUpgradeBtn}
+                onClick={() => setShowPricing(true)}
+              >
+                {t('app.rate_limit.view_plans', lang)}
+              </button>
             </div>
           )}
-          <div className={`${styles.inputCard} ${error ? styles.hasError : ''} ${rateLimitReset ? styles.disabled : ''}`}>
-            <div className={styles.inputRow}>
-              <span className={styles.inputPrompt} aria-hidden>$</span>
-              <textarea
-                ref={inputRef}
-                className={styles.textarea}
-                value={input}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                placeholder={PLACEHOLDERS[placeholderIdx]}
-                disabled={loading || !!rateLimitReset}
-                rows={3}
-                aria-label="Describe la acción de Git en lenguaje natural"
-              />
-            </div>
-
-            <div className={styles.inputFooter}>
-              <span>
-                {error
-                  ? <span className={styles.inputError}>{error}</span>
-                  : queriesLeft !== null && queriesLeft <= 10
-                    ? <span className={styles.inputWarning}>⚠ {queriesLeft} queries restantes hoy</span>
-                    : <span className={styles.inputHint}>⌘↵ para generar</span>
-                }
-              </span>
-              <div className={styles.inputFooterRight}>
-                <span className={`${styles.charCount} ${charCount > 240 ? styles.warning : ''}`}>
-                  {charCount}/280
-                </span>
+          {fixMode ? (
+            <div className={`${styles.fixCard} ${fixError ? styles.hasError : ''}`}>
+              <div className={styles.fixFields}>
+                <div className={styles.fixField}>
+                  <label className={styles.fixLabel} htmlFor="fix-status">
+                    {t('app.fix.status_label', lang)}
+                  </label>
+                  <textarea
+                    id="fix-status"
+                    className={styles.fixTextarea}
+                    value={gitStatus}
+                    onChange={e => { setGitStatus(e.target.value); setFixError(null) }}
+                    placeholder={t('app.fix.status_placeholder', lang)}
+                    rows={5}
+                  />
+                </div>
+                <div className={styles.fixField}>
+                  <label className={styles.fixLabel} htmlFor="fix-problem">
+                    {t('app.fix.problem_label', lang)}
+                  </label>
+                  <textarea
+                    id="fix-problem"
+                    className={styles.fixTextarea}
+                    value={problemDesc}
+                    onChange={e => { setProblemDesc(e.target.value); setFixError(null) }}
+                    placeholder={t('app.fix.problem_placeholder', lang)}
+                    rows={3}
+                  />
+                </div>
+              </div>
+              {fixError && <p className={styles.fixError}>{fixError}</p>}
+              <div className={styles.fixFooter}>
                 <button
                   type="button"
-                  className={styles.generateBtn}
-                  onClick={handleGenerate}
-                  disabled={loading || !input.trim() || !!rateLimitReset}
+                  className={styles.fixBtn}
+                  onClick={handleFix}
+                  disabled={fixLoading || !gitStatus.trim() || !problemDesc.trim()}
                 >
-                  {loading ? (
-                    <><span className={styles.spinner} /> Generando…</>
-                  ) : 'Generar →'}
+                  {fixLoading ? (
+                    <><span className={styles.spinner} /> {t('app.fix.diagnosing', lang)}</>
+                  ) : t('app.fix.diagnose', lang)}
                 </button>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className={`${styles.inputCard} ${error ? styles.hasError : ''} ${rateLimitReset ? styles.disabled : ''}`}>
+              <div className={styles.inputRow}>
+                <span className={styles.inputPrompt} aria-hidden>$</span>
+                <textarea
+                  ref={inputRef}
+                  className={styles.textarea}
+                  value={input}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  placeholder={t(PLACEHOLDER_KEYS[placeholderIdx]!, lang)}
+                  disabled={loading || !!rateLimitReset}
+                  rows={3}
+                  aria-label={t('app.aria.input', lang)}
+                />
+              </div>
 
-          {result ? (
+              <div className={styles.inputFooter}>
+                <span>
+                  {error
+                    ? <span className={styles.inputError}>{error}</span>
+                    : queriesLeft !== null && queriesLeft <= 10
+                      ? <span className={styles.inputWarning}>{t('app.hint.queries_left', lang, { n: queriesLeft })}</span>
+                      : <span className={styles.inputHint}>{t('app.hint.shortcut', lang)}</span>
+                  }
+                </span>
+                <div className={styles.inputFooterRight}>
+                  <span className={`${styles.charCount} ${charCount > 240 ? styles.warning : ''}`}>
+                    {charCount}/280
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.generateBtn}
+                    onClick={handleGenerate}
+                    disabled={loading || !input.trim() || !!rateLimitReset}
+                  >
+                    {loading ? (
+                      <><span className={styles.spinner} /> {t('app.generating', lang)}</>
+                    ) : t('app.generate', lang)}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {fixMode ? (
+            fixResult ? <FixResultCard result={fixResult} lang={lang} /> : null
+          ) : result ? (
             <ResultCard result={result} eduMode={eduMode} />
           ) : (
             <div className={styles.empty}>
               <p className={styles.emptyHint}>
-                Escribe en lenguaje natural y obtén el comando Git correcto
+                {t('app.empty.hint', lang)}
               </p>
               <div className={styles.suggestions}>
-                {SUGGESTIONS.map(s => (
-                  <button
-                    key={s}
-                    type="button"
-                    className={styles.suggestionChip}
-                    onClick={() => {
-                      setInput(s)
-                      setCharCount(s.length)
-                      inputRef.current?.focus()
-                    }}
-                  >
-                    {s}
-                  </button>
-                ))}
+                {SUGGESTION_KEYS.map(k => {
+                  const text = t(k, lang)
+                  return (
+                    <button
+                      key={k}
+                      type="button"
+                      className={styles.suggestionChip}
+                      onClick={() => {
+                        setInput(text)
+                        setCharCount(text.length)
+                        inputRef.current?.focus()
+                      }}
+                    >
+                      {text}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )}
         </div>
       </main>
+
+      <PricingModal open={showPricing} onClose={() => setShowPricing(false)} />
     </div>
   )
 }

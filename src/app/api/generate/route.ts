@@ -17,7 +17,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 
-  const { input } = await request.json() as { input: string }
+  const body = await request.json() as {
+    input: string
+    lang?: 'es' | 'en'
+    repoContext?: { branch: string; last_commit: string }
+  }
+  const { input, lang, repoContext } = body
   if (!input?.trim()) {
     return NextResponse.json({ error: 'input es requerido' }, { status: 400 })
   }
@@ -123,6 +128,8 @@ export async function POST(request: Request) {
       provider: providerConfig.provider,
       apiKey: secret.decrypted_secret,
       model: providerConfig.model,
+      lang: lang ?? 'es',
+      repoContext,
     }, input)
 
     const commandId = crypto.randomUUID()

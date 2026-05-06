@@ -1,0 +1,98 @@
+.root {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+
+/* ── Header ── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.headerLeft { display: flex; align-items: center; gap: 8px; }
+.headerIcon { font-size: 15px; }
+.headerTitle { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.stepCount {
+  font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted);
+  background: var(--bg-base); border: 1px solid var(--border);
+  padding: 2px 7px; border-radius: 10px;
+}
+.copyAllBtn {
+  display: flex; align-items: center; gap: 5px;
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 5px; padding: 4px 10px;
+  font-size: 11.5px; color: var(--text-muted); cursor: pointer;
+  transition: all 0.15s; font-family: var(--font-sans);
+}
+.copyAllBtn:hover { border-color: var(--text-muted); color: var(--text-secondary); }
+.copyAllBtn.copied { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+/* ── Steps ── */
+.steps {
+  list-style: none;
+  padding: 12px 16px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.step {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 12px 14px;
+  transition: border-color 0.15s;
+}
+.step:hover { border-color: var(--border); }
+
+.stepMeta { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
+.stepNum {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--bg-surface); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  color: var(--text-secondary);
+}
+.riskBadge {
+  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.05em; padding: 2px 6px; border-radius: 4px;
+  white-space: nowrap;
+}
+.risk_low    { background: var(--accent-dim); color: var(--accent); border: 1px solid oklch(0.75 0.22 142 / 0.3); }
+.risk_medium { background: var(--amber-dim); color: var(--amber); border: 1px solid oklch(0.78 0.18 72 / 0.3); }
+.risk_high   { background: oklch(0.65 0.20 22 / 0.1); color: var(--red); border: 1px solid oklch(0.65 0.20 22 / 0.3); }
+
+.stepBody { flex: 1; min-width: 0; }
+.stepCmd {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px; padding: 8px 12px;
+  margin-bottom: 8px;
+}
+.stepCmd code {
+  flex: 1; font-family: var(--font-mono); font-size: 13px;
+  color: var(--accent); word-break: break-all;
+}
+.copyBtn {
+  flex-shrink: 0;
+  display: flex; align-items: center;
+  background: transparent; border: none;
+  padding: 2px 4px; cursor: pointer;
+  color: var(--text-muted); transition: color 0.15s;
+}
+.copyBtn:hover { color: var(--text-primary); }
+.copyBtn.copied { color: var(--accent); }
+.stepDesc { font-size: 12.5px; color: var(--text-secondary); line-height: 1.55; font-weight: 300; }
+
+/* ── Footer ── */
+.footer {
+  padding: 10px 16px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-base);
+}
+.footerNote { font-size: 11.5px; color: var(--text-muted); font-style: italic; }

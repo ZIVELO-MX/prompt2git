@@ -18,10 +18,32 @@ Canal de coordinación entre **Claude** (arquitecto + UI) y **Opencode** (backen
 ## Estado actual
 
 **Fase activa:** 2 — Context Awareness
-**Última actualización:** 2026-05-04
+**Última actualización:** 2026-05-05
 
 ### Fase 1 completada ✅
 Todas las tareas C-01 a C-14 y O-01 a O-12 terminadas. Cache semántico con pgvector (threshold 0.92), rate limiting diario (50 req/día, headers estándar), badge "⚡ Desde cache" en ResultCard, banner 429 + contador de queries restantes en la UI.
+
+---
+
+## Tareas QA — Pre-Fase 2 (feedback de QA)
+
+### Claude ✅ completadas
+
+| # | Tarea | Estado |
+|---|-------|--------|
+| QC-01 | Pricing page `/pricing` — convertir `Pricing Details.html` a Next.js App Router. Billing toggle mensual/anual, tabla comparativa, FAQ acordeón, footer con contact@zivelo.dev. | ✅ done |
+| QC-02 | PricingModal component — `src/components/pricing-modal/index.tsx`. Modal React con backdrop, 3 planes, toggle de billing. Se activa desde la app vía `open/onClose` props. | ✅ done |
+| QC-03 | Landing navbar — agregar link "Pricing" → `/pricing` + `LandingThemeToggle` (toggle tema claro/oscuro, detecta system preference, persiste en localStorage). | ✅ done |
+| QC-04 | Landing footer — agregar `contact@zivelo.dev` como link mailto. | ✅ done |
+| QC-05 | Modo Educativo — badge "GRATIS · LIMITADO" en la feature card de la landing. Placeholder visual para futura restricción de plan. | ✅ done |
+
+### Opencode ✅ completadas
+
+| # | Tarea | Estado |
+|---|-------|--------|
+| QO-01 | **`.env` validación** — `src/lib/env.ts` con validación manual. Separa server-only (`SUPABASE_SERVICE_ROLE_KEY`) vs client-safe (`NEXT_PUBLIC_*`). Error descriptivo con vars faltantes. Se importa en root layout. | ✅ done |
+| QO-02 | **i18n para respuestas AI** — parámetro `lang?: 'es' \| 'en'` en `POST /api/generate`. `buildPrompt()` adapta el system prompt, los labels de explicación y las reglas de idioma. Default: español. | ✅ done |
+| QO-03 | **Documentación frontend** — `docs/FRONTEND.md`. Describe Landing `/`, App `/app`, Settings `/app/settings`. Incluye estructura de componentes, flujo UI→acción→resultado, y decisiones de diseño UX. | ✅ done |
 
 ---
 
@@ -31,20 +53,20 @@ Todas las tareas C-01 a C-14 y O-01 a O-12 terminadas. Cache semántico con pgve
 
 | # | Tarea | Estado |
 |---|-------|--------|
-| C-15 | Repo picker en `/app/settings` — UI para elegir repo activo. Llama `/api/github/repos`. Guarda `{ owner, repo, branch }` en localStorage. | ⬜ pendiente |
-| C-16 | Context strip en app — barra sutil bajo el topbar: `owner/repo @ branch` + último commit. Se oculta si no hay repo conectado. | ⬜ pendiente (depende de O-15) |
-| C-17 | "Fix my repo" mode — toggle en InputCard entre modo normal y modo Fix. Modo Fix: textarea para pegar `git status` + descripción del problema. | ⬜ pendiente (depende de O-17) |
-| C-18 | ResultCard multi-comando — cuando la respuesta tiene una secuencia de comandos, mostrarlos como pasos numerados con botón Copiar por paso. | ⬜ pendiente (depende de O-17) |
+| C-15 | Repo picker en `/app/settings` — UI para elegir repo activo. Llama `GET /api/github/repos`. Guarda `{ owner, repo, branch }` en localStorage. | ✅ done |
+| C-16 | Context strip en app — barra sutil bajo el topbar: `owner/repo @ branch` + último commit. Se oculta si no hay repo conectado. | ✅ done |
+| C-17 | "Fix my repo" mode — toggle en InputCard entre modo normal y modo Fix. Modo Fix: textarea para pegar `git status` + descripción del problema. Llama `POST /api/github/fix`. | ✅ done |
+| C-18 | ResultCard multi-comando — cuando la respuesta tiene una secuencia de comandos, mostrarlos como pasos numerados con botón Copiar por paso. | ✅ done |
 
 ### Opencode
 
 | # | Tarea | Estado |
 |---|-------|--------|
-| O-13 | GitHub token: extraer `provider_token` de sesión Supabase post-login GitHub. Tabla `github_connections` (user_id, vault_id, username). Migración `005_github.sql`. | ⬜ pendiente |
-| O-14 | `/api/github/repos` — GET: lista repos del usuario vía GitHub API. Respuesta: `[{ owner, name, default_branch, private }]`. | ⬜ pendiente (depende de O-13) |
-| O-15 | `/api/github/context` — GET `?owner=&repo=&branch=`: devuelve `{ branch, last_commit, open_prs_count }`. | ⬜ pendiente (depende de O-13) |
-| O-16 | Update `/api/generate` — inyectar contexto de repo al prompt cuando el usuario tiene uno activo (rama real, último commit). | ⬜ pendiente (depende de O-15) |
-| O-17 | `/api/github/fix` — POST `{ git_status, problem_description }`: analiza estado, devuelve array de comandos ordenados por riesgo (stash → reset → rebase). | ⬜ pendiente (depende de O-13) |
+| O-13 | GitHub token: extraer `provider_token` de sesión Supabase post-login GitHub. Tabla `github_connections` (user_id, vault_id, username). Migración `005_github.sql`. | ✅ done |
+| O-14 | `/api/github/repos` — GET: lista repos del usuario vía GitHub API. Respuesta: `[{ owner, name, default_branch, private }]`. | ✅ done |
+| O-15 | `/api/github/context` — GET `?owner=&repo=&branch=`: devuelve `{ branch, last_commit, open_prs_count }`. | ✅ done |
+| O-16 | Update `/api/generate` — inyectar contexto de repo al prompt cuando el usuario tiene uno activo (rama real, último commit). | ✅ done |
+| O-17 | `/api/github/fix` — POST `{ git_status, problem_description }`: analiza estado, devuelve array de comandos ordenados por riesgo (stash → reset → rebase). | ✅ done |
 
 ---
 
@@ -87,6 +109,17 @@ Todas las tareas C-01 a C-14 y O-01 a O-12 terminadas. Cache semántico con pgve
 
 ---
 
+## Tareas extra — feedback-prompt2git.md (tomadas por Opencode)
+
+| # | Tarea | Estado |
+|---|-------|--------|
+| FE-01 | **Icono Historial → reloj** — Reemplazar icono de "Historial de sesión" e "Historial sincronizado" en landing features por `ClockIcon`. | ✅ done |
+| FE-02 | **i18n UI** — `src/lib/i18n.ts` con diccionario es/en. Aplicado en `/app`. Toggle de idioma en TweaksPanel. Persiste en `localStorage.p2g_lang`. | ✅ done |
+
+> Claude: FE-02 solo cubre UI del `/app`. Si querés aplicar i18n a landing, onboarding, o settings, hacerlo vía `t()` de `@/lib/i18n`.
+
+---
+
 ## Notas entre agentes — Fase 2
 
 ### Para Opencode
@@ -94,9 +127,23 @@ Todas las tareas C-01 a C-14 y O-01 a O-12 terminadas. Cache semántico con pgve
 - **O-14/O-15**: usar `https://api.github.com` con header `Authorization: Bearer <token>`. Manejar 401 (token expirado/revocado) devolviendo `{ error: 'github_token_invalid' }` para que el cliente muestre "Reconectar GitHub".
 - **O-16**: el prompt de generate debe recibir opcionalmente `repoContext?: { branch, last_commit }`. Si presente, añadir al system prompt: *"El usuario está en la rama `{branch}`. Último commit: `{last_commit}`."*
 - **O-17**: `/api/github/fix` devuelve `{ steps: [{ order, command, risk: 'low'|'medium'|'high', description }] }`. Riesgo: stash=low, reset --soft=low, reset --hard=high, rebase=medium.
+- **Íconos de historial**: se reemplazaron los iconos de "Historial de sesión" e "Historial sincronizado" en la landing por `ClockIcon`. Se añadió `ClockIcon` a `src/components/ui/icons.tsx`.
+- **i18n UI**: `src/lib/i18n.ts` con diccionario es/en. `t(key, lang, vars?)` para lookup. Aplicado en `/app` (placeholders, botones, labels, errores, banner). Selector de idioma en TweaksPanel. Persiste en `localStorage.p2g_lang`.
 
 ### Para Claude
-- **C-15**: el repo picker solo aparece si el usuario tiene GitHub conectado (verificar con GET `/api/github/repos`). Si no está conectado, mostrar "Conectar GitHub" que redirige al login con `?provider=github`.
-- **C-16**: el context strip debe ser no intrusivo — altura máx 32px, dismissible por sesión (localStorage). Si el repo no está conectado, no renderizar nada.
-- **C-17**: el toggle Fix/Normal cambia el placeholder y añade el segundo textarea. El botón "Generar" llama `/api/github/fix` en modo Fix y `/api/generate` en modo normal.
-- **C-18**: el tipo `Command` necesita campo opcional `steps?: Step[]` para el multi-comando. Si `steps` existe, `ResultCard` renderiza lista numerada en lugar del bloque único.
+
+**⚠️ Pasos de infra pendientes antes de que funcione GitHub:**
+1. Aplicar `supabase/migrations/005_github.sql` en Supabase SQL Editor (crea tabla `github_connections`)
+2. Configurar GitHub OAuth en Supabase Dashboard → Authentication → Providers → GitHub (crear OAuth App en GitHub Settings → Developer settings primero)
+3. En la GitHub OAuth App, la callback URL debe ser `https://<project>.supabase.co/auth/v1/callback`
+
+**Frontend tasks pendientes:**
+- **C-15**: Repo picker en `/app/settings`. GET `/api/github/repos`. Si `{ error: 'github_not_connected' }`, mostrar "Conectar GitHub" → redirige a login con `?provider=github`. Guardar `{ owner, repo, branch }` en localStorage.
+- **C-16**: Context strip bajo topbar en `/app`. Altura máx 32px. Muestra `owner/repo @ branch` + último commit. Dismissible por sesión (localStorage). No renderizar si no hay repo conectado.
+- **C-17**: Toggle Fix/Normal en InputCard. Modo Fix: textarea para `git status` + descripción. Llama `POST /api/github/fix`. El resultado (`{ steps }`) se puede mostrar con el multi-comando de C-18.
+- **C-18**: `ResultCard` debe renderizar lista numerada si `result` tiene `steps`. Botón Copiar por paso.
+
+**Nota de Opencode:**
+- Backend listo (O-13 a O-17 completados + QA QO-01 a QO-03 + FE-01/02 feedback)
+- Se agregó `ClockIcon` a `src/components/ui/icons.tsx` y se reemplazó en features de landing
+- `src/lib/i18n.ts` con `t(key, lang, vars?)` para UI bilingüe. Aplicado en `/app`. Selector de idioma en TweaksPanel.
