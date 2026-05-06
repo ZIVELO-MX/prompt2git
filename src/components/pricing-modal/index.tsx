@@ -21,8 +21,8 @@ const PLANS = [
     features: [
       '50 comandos por mes',
       'Comandos básicos',
-      'Modo Educativo',
-      '6 proveedores de IA',
+      'Modo Educativo (5 usos/semana)',
+      '6 proveedores · BYOK',
       { text: 'Comandos avanzados', muted: true },
       { text: 'Context de repo', muted: true },
     ],
@@ -39,11 +39,11 @@ const PLANS = [
     tag: 'MÁS POPULAR',
     features: [
       'Comandos ilimitados',
+      'Modo Educativo ilimitado',
       'Comandos avanzados',
       'Context awareness',
       '"Fix my repo" mode',
       'Historial sincronizado',
-      'Email prioritario',
     ],
   },
   {
@@ -166,7 +166,7 @@ export function PricingModal({ open, onClose }: Props) {
         {/* Footer */}
         <div className={styles.footer}>
           <div className={styles.footerLeft}>
-            <span>Todos los planes incluyen API key propia</span>
+            <span>BYOK — todos los planes usan tu propia API key</span>
             <span className={styles.sep}>·</span>
             <a href="/pricing" className={styles.footerLink} onClick={onClose}>Ver comparativa completa →</a>
           </div>

@@ -135,7 +135,7 @@ export default function LandingPage() {
               <div className={styles.statDiv} />
               <div className={styles.statItem}>
                 <span className={styles.statNum}>🔐</span>
-                <span className={styles.statLbl}>Tu key, cifrada</span>
+                <span className={styles.statLbl}>BYOK · Tu key, cifrada</span>
               </div>
             </div>
         </div>
@@ -198,9 +198,9 @@ export default function LandingPage() {
               </div>
               <div className={styles.featTitleRow}>
                 <div className={styles.featTitle}>Modo Educativo</div>
-                <span className={styles.featBadgeFree}>GRATIS · LIMITADO</span>
+                <span className={styles.featBadgeFree}>5 USOS/SEM · FREE</span>
               </div>
-              <p className={styles.featText}>Activa el modo educativo y aprende el significado de cada flag con tooltips interactivos. Ideal para juniors.</p>
+              <p className={styles.featText}>Activa el modo educativo y aprende el significado de cada flag con tooltips interactivos. <strong>5 usos gratuitos por semana</strong> — ilimitado en Pro.</p>
             </div>
 
             <div className={styles.featCard}>
@@ -221,9 +221,9 @@ export default function LandingPage() {
                   <path d="M10 7v3l2 2" stroke="oklch(0.72 0.18 295)" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
               </div>
-              <div className={styles.featTitle}>Multi-provider</div>
-              <p className={styles.featText}>Conectá tu API key del proveedor que prefieras: Anthropic, OpenAI, Gemini, Groq, Mistral u OpenRouter. Tú elegís.</p>
-              <div className={styles.featCode}>6 proveedores disponibles</div>
+              <div className={styles.featTitle}>Multi-provider · BYOK</div>
+              <p className={styles.featText}>Conectá tu propia API key (BYOK) del proveedor que prefieras: Anthropic, OpenAI, Gemini, Groq, Mistral u OpenRouter. Tus costos, tu control.</p>
+              <div className={styles.featCode}>6 proveedores · Bring Your Own Key</div>
             </div>
 
             <div className={styles.featCard}>

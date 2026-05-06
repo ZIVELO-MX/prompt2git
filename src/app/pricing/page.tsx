@@ -23,8 +23,8 @@ const PLANS = [
     features: [
       { text: '50 comandos por mes', highlight: false },
       { text: 'Comandos básicos (add, commit, push, merge)', highlight: false },
-      { text: 'Modo Educativo · tooltips por flag', highlight: false },
-      { text: '6 proveedores de IA (tu API key)', highlight: false },
+      { text: 'Modo Educativo · <strong>5 usos/semana</strong>', highlight: false },
+      { text: '6 proveedores de IA · <strong>BYOK</strong>', highlight: false },
       { text: 'Historial de sesión', highlight: false },
       { text: 'Comandos avanzados (rebase, reflog…)', muted: true },
       { text: 'Context de repositorio', muted: true },
@@ -45,11 +45,11 @@ const PLANS = [
     features: [
       { text: 'Comandos ilimitados', highlight: true },
       { text: 'Comandos avanzados (rebase, cherry-pick, reflog, bisect)', highlight: false },
+      { text: 'Modo Educativo <strong>ilimitado</strong>', highlight: false },
       { text: 'Context awareness · rama + último commit', highlight: false },
       { text: '"Fix my repo" mode · diagnóstico inteligente', highlight: false },
       { text: 'Historial sincronizado entre dispositivos', highlight: false },
       { text: 'Email prioritario · respuesta &lt; 24h', highlight: false },
-      { text: 'Claude Haiku + Opus disponibles', highlight: false },
     ] satisfies PlanFeature[],
   },
   {
@@ -80,9 +80,10 @@ const COMPARISON_ROWS = [
     { label: 'Comandos básicos', desc: 'add, commit, push, pull, branch, merge', starter: true, pro: true, teams: true },
     { label: 'Comandos avanzados', desc: 'rebase, cherry-pick, reflog, bisect, worktree', starter: false, pro: true, teams: true },
     { label: 'Modelo de IA', desc: 'Calidad de generación', starter: 'Claude Haiku', pro: 'Haiku + Opus', teams: 'Haiku + Opus', proColor: 'green' },
+    { label: 'BYOK (Bring Your Own Key)', desc: 'Conectás tu propia API key del proveedor elegido', starter: true, pro: true, teams: true },
   ]},
   { category: 'Aprendizaje', rows: [
-    { label: 'Modo Educativo', desc: 'Explicación de cada flag con tooltips', starter: true, pro: true, teams: true },
+    { label: 'Modo Educativo', desc: 'Tooltips por flag — usos semanales', starter: '5/sem', pro: '∞', teams: '∞', proColor: 'green' },
     { label: 'Quiz de práctica', desc: 'Ejercicios para fijar el aprendizaje', starter: false, pro: true, teams: true },
   ]},
   { category: 'Context Awareness', rows: [
@@ -109,7 +110,7 @@ const COMPARISON_ROWS = [
 const FAQS = [
   { q: '¿Puedo cambiar de plan en cualquier momento?', a: 'Sí. Puedes hacer upgrade o downgrade desde tu panel de cuenta. Si haces upgrade a Pro, el cambio es inmediato y se prorratea el costo. Si haces downgrade, el cambio aplica al final de tu ciclo de facturación actual.' },
   { q: '¿Qué pasa con mi historial si cancelo?', a: 'Mantenemos tu historial activo durante 90 días tras la cancelación. Puedes exportarlo como JSON o Markdown en cualquier momento. Si vuelves a suscribirte dentro de ese plazo, recuperas todo intacto.' },
-  { q: '¿Funciona sin API key propia?', a: 'El plan Starter requiere tu propia API key de cualquier proveedor soportado. En Pro y Teams ofrecemos acceso directo sin key propia (coming soon). Tus keys siempre se almacenan cifradas en Vault.' },
+  { q: '¿Qué es BYOK y por qué lo usan?', a: 'BYOK significa Bring Your Own Key — conectás tu propia API key del proveedor de IA que prefieras (Anthropic, OpenAI, Gemini, Groq, Mistral u OpenRouter). Tu key se almacena cifrada en Vault y nunca se expone al cliente. Este modelo garantiza que tú controlas tus costos y privacidad directamente.' },
   { q: '¿Mis prompts y comandos son privados?', a: 'Sí. No usamos tu input para entrenar modelos. Los prompts se procesan vía tu proveedor con sus políticas. Tu historial se almacena cifrado y solo es accesible desde tu cuenta.' },
   { q: '¿Hay descuentos para estudiantes / OSS?', a: 'Sí. Ofrecemos Pro gratuito para proyectos open source activos y descuento del 50% para estudiantes verificados. Escríbenos a contact@zivelo.dev con tu caso.' },
   { q: '¿Cuándo llega el plan Teams?', a: 'Teams está planificado para V2 (Q3 2026). Si quieres acceso anticipado o un piloto para tu equipo, escríbenos a contact@zivelo.dev.' },
