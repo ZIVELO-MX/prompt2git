@@ -21,13 +21,13 @@ const PLANS = [
     cta: 'Empezar gratis',
     ctaStyle: 'ghost' as const,
     features: [
-      { text: '50 comandos por mes', highlight: false },
+      { text: '20 comandos por mes', highlight: false },
+      { text: '<strong>IA incluida</strong> · sin API key propia', highlight: false },
       { text: 'Comandos básicos (add, commit, push, merge)', highlight: false },
       { text: 'Modo Educativo · <strong>5 usos/semana</strong>', highlight: false },
-      { text: '6 proveedores de IA · <strong>BYOK</strong>', highlight: false },
       { text: 'Historial de sesión', highlight: false },
       { text: 'Comandos avanzados (rebase, reflog…)', muted: true },
-      { text: 'Context de repositorio', muted: true },
+      { text: 'BYOK · multi-provider', muted: true },
     ] satisfies PlanFeature[],
   },
   {
@@ -43,12 +43,12 @@ const PLANS = [
     featured: true,
     tag: 'MÁS POPULAR',
     features: [
-      { text: 'Comandos ilimitados', highlight: true },
-      { text: 'Comandos avanzados (rebase, cherry-pick, reflog, bisect)', highlight: false },
+      { text: 'Comandos <strong>ilimitados</strong>', highlight: true },
+      { text: '<strong>BYOK</strong> · 6 proveedores de IA (Anthropic, OpenAI, Gemini, Groq, Mistral, OpenRouter)', highlight: false },
       { text: 'Modo Educativo <strong>ilimitado</strong>', highlight: false },
+      { text: 'Comandos avanzados (rebase, cherry-pick, reflog, bisect)', highlight: false },
       { text: 'Context awareness · rama + último commit', highlight: false },
       { text: '"Fix my repo" mode · diagnóstico inteligente', highlight: false },
-      { text: 'Historial sincronizado entre dispositivos', highlight: false },
       { text: 'Email prioritario · respuesta &lt; 24h', highlight: false },
     ] satisfies PlanFeature[],
   },
@@ -76,11 +76,11 @@ const PLANS = [
 
 const COMPARISON_ROWS = [
   { category: 'Generación de comandos', rows: [
-    { label: 'Comandos por mes', desc: 'Traducciones NL→Git', starter: '50', pro: '∞', teams: '∞', proHighlight: true },
+    { label: 'Comandos por mes', desc: 'Traducciones NL→Git', starter: '20', pro: '∞', teams: '∞', proHighlight: true },
+    { label: 'Proveedor de IA', desc: 'Quién provee el modelo de IA', starter: 'Incluido', pro: 'BYOK · tu elección', teams: 'BYOK · tu elección', proColor: 'green' },
+    { label: 'API key propia (BYOK)', desc: 'Bring Your Own Key — 6 proveedores disponibles', starter: false, pro: true, teams: true },
     { label: 'Comandos básicos', desc: 'add, commit, push, pull, branch, merge', starter: true, pro: true, teams: true },
     { label: 'Comandos avanzados', desc: 'rebase, cherry-pick, reflog, bisect, worktree', starter: false, pro: true, teams: true },
-    { label: 'Modelo de IA', desc: 'Calidad de generación', starter: 'Claude Haiku', pro: 'Haiku + Opus', teams: 'Haiku + Opus', proColor: 'green' },
-    { label: 'BYOK (Bring Your Own Key)', desc: 'Conectás tu propia API key del proveedor elegido', starter: true, pro: true, teams: true },
   ]},
   { category: 'Aprendizaje', rows: [
     { label: 'Modo Educativo', desc: 'Tooltips por flag — usos semanales', starter: '5/sem', pro: '∞', teams: '∞', proColor: 'green' },
@@ -110,7 +110,7 @@ const COMPARISON_ROWS = [
 const FAQS = [
   { q: '¿Puedo cambiar de plan en cualquier momento?', a: 'Sí. Puedes hacer upgrade o downgrade desde tu panel de cuenta. Si haces upgrade a Pro, el cambio es inmediato y se prorratea el costo. Si haces downgrade, el cambio aplica al final de tu ciclo de facturación actual.' },
   { q: '¿Qué pasa con mi historial si cancelo?', a: 'Mantenemos tu historial activo durante 90 días tras la cancelación. Puedes exportarlo como JSON o Markdown en cualquier momento. Si vuelves a suscribirte dentro de ese plazo, recuperas todo intacto.' },
-  { q: '¿Qué es BYOK y por qué lo usan?', a: 'BYOK significa Bring Your Own Key — conectás tu propia API key del proveedor de IA que prefieras (Anthropic, OpenAI, Gemini, Groq, Mistral u OpenRouter). Tu key se almacena cifrada en Vault y nunca se expone al cliente. Este modelo garantiza que tú controlas tus costos y privacidad directamente.' },
+  { q: '¿Necesito una API key para empezar?', a: 'No. El plan Starter incluye acceso a IA sin que necesites configurar nada — nosotros proveemos el modelo. Si actualizas a Pro, pasás al modelo BYOK (Bring Your Own Key): conectás tu propia API key del proveedor que prefieras (Anthropic, OpenAI, Gemini, Groq, Mistral u OpenRouter) y tenés comandos ilimitados. Tu key se almacena cifrada en Vault.' },
   { q: '¿Mis prompts y comandos son privados?', a: 'Sí. No usamos tu input para entrenar modelos. Los prompts se procesan vía tu proveedor con sus políticas. Tu historial se almacena cifrado y solo es accesible desde tu cuenta.' },
   { q: '¿Hay descuentos para estudiantes / OSS?', a: 'Sí. Ofrecemos Pro gratuito para proyectos open source activos y descuento del 50% para estudiantes verificados. Escríbenos a contact@zivelo.dev con tu caso.' },
   { q: '¿Cuándo llega el plan Teams?', a: 'Teams está planificado para V2 (Q3 2026). Si quieres acceso anticipado o un piloto para tu equipo, escríbenos a contact@zivelo.dev.' },

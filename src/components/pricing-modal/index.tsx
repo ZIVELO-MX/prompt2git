@@ -19,12 +19,12 @@ const PLANS = [
     cta: 'Plan actual',
     ctaStyle: 'ghost' as const,
     features: [
-      '50 comandos por mes',
-      'Comandos básicos',
+      '20 comandos por mes',
+      'IA incluida · sin API key propia',
       'Modo Educativo (5 usos/semana)',
-      '6 proveedores · BYOK',
+      'Comandos básicos',
       { text: 'Comandos avanzados', muted: true },
-      { text: 'Context de repo', muted: true },
+      { text: 'BYOK · multi-provider', muted: true },
     ],
   },
   {
@@ -39,11 +39,11 @@ const PLANS = [
     tag: 'MÁS POPULAR',
     features: [
       'Comandos ilimitados',
+      'BYOK · 6 proveedores de IA',
       'Modo Educativo ilimitado',
       'Comandos avanzados',
       'Context awareness',
       '"Fix my repo" mode',
-      'Historial sincronizado',
     ],
   },
   {
@@ -166,7 +166,7 @@ export function PricingModal({ open, onClose }: Props) {
         {/* Footer */}
         <div className={styles.footer}>
           <div className={styles.footerLeft}>
-            <span>BYOK — todos los planes usan tu propia API key</span>
+            <span>Starter: IA incluida · Pro y Teams: BYOK</span>
             <span className={styles.sep}>·</span>
             <a href="/pricing" className={styles.footerLink} onClick={onClose}>Ver comparativa completa →</a>
           </div>
