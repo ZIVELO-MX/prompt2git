@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 import Link from 'next/link'
 import styles from './pricing.module.css'
 
@@ -247,8 +247,8 @@ export default function PricingPage() {
               </thead>
               <tbody>
                 {COMPARISON_ROWS.map(group => (
-                  <>
-                    <tr key={group.category} className={styles.catRow}>
+                  <Fragment key={group.category}>
+                    <tr className={styles.catRow}>
                       <td colSpan={4}>{group.category}</td>
                     </tr>
                     {group.rows.map((row, i) => (
@@ -262,7 +262,7 @@ export default function PricingPage() {
                         <td>{renderCell(row.teams)}</td>
                       </tr>
                     ))}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
