@@ -1,15 +1,30 @@
 'use client'
 
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { GitIcon } from '@/components/ui/icons'
 import styles from './login.module.css'
+
+const ALLOWED_VSCODE_REDIRECT = 'vscode://zivelo.gitspeak/auth-callback'
+
+function buildCallbackUrl(redirectUri: string | null): string {
+  const base = `${location.origin}/auth/callback`
+  if (redirectUri === ALLOWED_VSCODE_REDIRECT) {
+    return `${base}?next=${encodeURIComponent(redirectUri)}`
+  }
+  return base
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  const searchParams = useSearchParams()
+  const redirectUri = searchParams.get('redirect_uri')
+  const isExtension = redirectUri === ALLOWED_VSCODE_REDIRECT
 
   const supabase = createClient()
 
@@ -22,7 +37,7 @@ export default function LoginPage() {
 
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
-      options: { emailRedirectTo: `${location.origin}/auth/callback` },
+      options: { emailRedirectTo: buildCallbackUrl(redirectUri) },
     })
 
     setLoading(false)
@@ -40,7 +55,7 @@ export default function LoginPage() {
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
-      options: { redirectTo: `${location.origin}/auth/callback` },
+      options: { redirectTo: buildCallbackUrl(redirectUri) },
     })
 
     if (error) {
@@ -61,6 +76,12 @@ export default function LoginPage() {
         <p className={styles.tagline}>
           Lenguaje natural → Comandos Git
         </p>
+
+        {isExtension && (
+          <p className={styles.extensionHint}>
+            Iniciá sesión para conectar la extensión de VS Code
+          </p>
+        )}
 
         {sent ? (
           <div className={styles.sentState}>

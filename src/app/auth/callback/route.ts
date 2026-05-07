@@ -68,7 +68,15 @@ export async function GET(request: NextRequest) {
       await saveGitHubToken(data.session.provider_token, data.user.id)
     }
 
-    if (!error) {
+    if (!error && data.session) {
+      // Extension auth: redirect token back to VS Code via deep link
+      const VSCODE_CALLBACK = 'vscode://zivelo.gitspeak/auth-callback'
+      if (next.startsWith(VSCODE_CALLBACK)) {
+        const target = new URL(next)
+        target.searchParams.set('token', data.session.access_token)
+        return NextResponse.redirect(target.toString())
+      }
+
       return NextResponse.redirect(`${origin}${next}`)
     }
   }
