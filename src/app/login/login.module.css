@@ -37,8 +37,20 @@
 .tagline {
   font-size: 13px;
   color: var(--text-muted);
-  margin-bottom: 32px;
+  margin-bottom: 16px;
   text-align: center;
+}
+
+.extensionHint {
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--accent-dim);
+  border: 1px solid rgba(61,214,128,0.2);
+  border-radius: 6px;
+  padding: 6px 12px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-family: var(--font-mono);
 }
 
 .form {

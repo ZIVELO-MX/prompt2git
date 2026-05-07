@@ -30,6 +30,12 @@ const ENV_VARS: EnvVar[] = [
     serverOnly: false,
     description: 'URL base de la app para redirects',
   },
+  {
+    key: 'OPENROUTER_API_KEY',
+    required: false,
+    serverOnly: true,
+    description: 'Key de OpenRouter para el plan free (solo servidor)',
+  },
 ]
 
 export function validateEnv(): void {

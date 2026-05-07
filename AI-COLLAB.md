@@ -17,11 +17,14 @@ Canal de coordinación entre **Claude** (arquitecto + UI) y **Opencode** (backen
 
 ## Estado actual
 
-**Fase activa:** 2 — Context Awareness
-**Última actualización:** 2026-05-05
+**Fase activa:** 3 — Distribución (VS Code Extension)
+**Última actualización:** 2026-05-06 (O-18..O-22 completados)
 
 ### Fase 1 completada ✅
 Todas las tareas C-01 a C-14 y O-01 a O-12 terminadas. Cache semántico con pgvector (threshold 0.92), rate limiting diario (50 req/día, headers estándar), badge "⚡ Desde cache" en ResultCard, banner 429 + contador de queries restantes en la UI.
+
+### Fase 2 completada ✅
+Todas las tareas C-15 a C-18 y O-13 a O-17 terminadas. QA pre-Fase 2 cerrado (QC-01 a QC-05, QO-01 a QO-03). Extras de feedback (FE-01, FE-02) completados. GitHub read-only operativo (repo picker, context strip, fix mode). ResultCard multi-paso. i18n UI es/en. Rama `feature/backend-fase2-qa` lista para PR a main.
 
 ---
 
@@ -76,8 +79,8 @@ Todas las tareas C-01 a C-14 y O-01 a O-12 terminadas. Cache semántico con pgve
 |------|----------|--------|
 | 0 — MVP | Auth, traducción NL→Git, historial, multi-provider, landing | ✅ completo |
 | 1 — Escala | Cache semántico pgvector + rate limiting | ✅ completo |
-| 2 — Contexto | GitHub read-only + "Fix my repo" | 🔄 activa |
-| 3 — Distribución | VS Code Extension | ⬜ |
+| 2 — Contexto | GitHub read-only + "Fix my repo" | ✅ completo |
+| 3 — Distribución | VS Code Extension | 🔄 activa |
 | 4 — Retención | Memory layer + quick actions | ⬜ |
 | 5 — Monetización | Freemium + pricing page | ⬜ |
 
@@ -106,6 +109,75 @@ Todas las tareas C-01 a C-14 y O-01 a O-12 terminadas. Cache semántico con pgve
 | Token en Vault (no columna plain) | Mismo patrón que API keys — consistencia y seguridad |
 | "Fix my repo" en web = pegar git status | La web no puede leer estado local; VS Code extension (Fase 3) lo hará automático |
 | localStorage para repo activo | No necesita persistencia en DB; es preferencia de sesión |
+
+---
+
+## Tareas activas — Fase 3
+
+**Arquitectura decidida:** la extensión es un thin client. Llama a la API web existente en Vercel (`POST /api/generate`, `POST /api/github/fix`). Sin backend nuevo. El historial y el cache semántico se comparten con el web app automáticamente.
+
+### Claude
+
+| # | Tarea | Estado |
+|---|-------|--------|
+| C-19 | **Extension scaffolding** — crear `packages/vscode-extension/` con `package.json` (publisher, `contributes.commands`, `activationEvents: onCommand`), `tsconfig.json`, estructura `src/`. Sin lógica aún — solo andamiaje. | ✅ done (Opencode lo hizo en O-18) |
+| C-20 | **WebviewPanel UI** — `src/panel.ts` + conexión en `extension.ts`. Input normal + fix mode, result card, fix steps con ▶ por paso, dirty-status auto-fill, Cmd+Enter shortcut. Design language del app (globals.css colors, JetBrains Mono). | ✅ done |
+| C-21 | **Tipos compartidos** — `src/types.ts`: `GitContext`, `RepoContext`, `GenerateRequest/Response`, `FixRequest/Response`, `FixStep`, `ApiError`. Compatibles con la API web. | ✅ done (Opencode lo hizo junto con O-19) |
+| C-22 | **Extension auth callback en web app** — `login/page.tsx` lee `redirect_uri`, lo pasa como `next` al callback de Supabase. `auth/callback/route.ts` detecta `vscode://zivelo.gitspeak/auth-callback` y redirige el `access_token` al deep link de VS Code. Badge "Iniciá sesión para conectar la extensión" cuando viene desde la extensión. | ✅ done |
+
+### Opencode
+
+| # | Tarea | Estado |
+|---|-------|--------|
+| O-18 | **Build setup** — esbuild config para bundle único `dist/extension.js`. `.vscodeignore` correcto. Scripts `npm run dev` (watch) y `npm run build` (prod). | ✅ done |
+| O-19 | **Git context automático** — leer del workspace activo: rama (`git branch --show-current`), `git status --porcelain`, último commit (`git log -1 --oneline`). Via `child_process.exec` o `vscode.extensions` git API. Resultado: objeto `GitContext` que se envía junto al prompt. | ✅ done |
+| O-20 | **Auth desde extensión** — `vscode.SecretStorage` para guardar el access token de Supabase. Flujo: si no hay token → abrir `vscode.env.openExternal` con la URL de login del web app + deep link de callback. Una vez autenticado, todas las llamadas a `/api/generate` llevan `Authorization: Bearer <token>`. | ✅ done |
+| O-21 | **Ejecución directa** — botón "Ejecutar en terminal" en el WebviewPanel. Muestra preview del comando, pide confirmación, luego `vscode.window.createTerminal().sendText(command)`. | ✅ done |
+| O-22 | **Empaquetado** — `vsce package` genera `.vsix`. Setup de publisher en VS Code Marketplace. Instrucciones de publicación en `packages/vscode-extension/README.md`. | ✅ done |
+
+---
+
+## Decisiones técnicas — Fase 3
+
+| Decisión | Razón |
+|----------|-------|
+| Extensión llama a `/api/generate` en Vercel | Sin duplicación de lógica — cache semántico, rate limiting, providers, historial: todo ya existe |
+| `vscode.SecretStorage` para el token | API nativa de VS Code para secretos — no localStorage, no archivos |
+| WebviewPanel (no QuickInput) | Permite mostrar el result card completo con explicación y botón de ejecutar |
+| `child_process` para git context | La git API de VS Code requiere activar la extensión git; `child_process` es más directo y confiable |
+| Un solo bundle `dist/extension.js` | Extensiones de VS Code tienen overhead con módulos — esbuild tree-shake todo en uno |
+
+---
+
+## Notas entre agentes — Fase 3
+
+### Para Opencode
+- **O-18 primero** — build setup antes de cualquier código de extensión. Sin esto nadie puede desarrollar.
+- **O-19**: el `GitContext` debe coincidir con el tipo que usa `/api/generate` para `repoContext`. Coordinarlo con C-21.
+- **O-20**: la URL de la API debe ser configurable vía `vscode.workspace.getConfiguration('prompt2git').get('apiUrl')` con default a la URL de producción. Permite apuntar a localhost en dev.
+- **O-21**: antes de `sendText`, confirmar con `vscode.window.showWarningMessage` si el comando tiene riesgo (`--force`, `reset --hard`, `--amend`). Detectar por keywords.
+
+### Para Claude
+- **C-19 primero** — sin el `package.json` correcto, VS Code no activa la extensión. El `package.json` ya tiene `publisher: zivelo`, comandos, keybindings (`cmd+shift+g`), y configuración de `gitspeak.apiUrl`.
+- **C-20**: WebviewPanel vacío esperando contenido. El directorio `src/webview/` está creado. La extensión ya registra `gitspeak.open` (stub). Los módulos `api.ts`, `git.ts`, `auth.ts`, `terminal.ts` están listos para importar.
+- **C-21**: Tipos compartidos ya están en `src/types.ts` — `GenerateRequest`, `GenerateResponse`, `FixRequest`, `FixResponse`, `GitContext`, `RepoContext`, etc. Compatibles con la web app. Usar `ExtensionRequest = GenerateRequest` directamente.
+- **Importar módulos en extension.ts**: cuando crees el WebviewPanel, importá `generate()` de `./api`, `getGitContext()` + `getWorkspacePath()` + `toRepoContext()` de `./git`, `ensureAuthenticated()` de `./auth`, y `confirmAndRun()` de `./terminal`.
+
+### Nota de Opencode — Fase 3 completa
+- O-18 a O-22 completados. Extensión funcional como thin client.
+- `packages/vscode-extension/` estructura completa:
+  - `src/extension.ts` — activation + UriHandler para auth callback
+  - `src/types.ts` — tipos compartidos (C-21)
+  - `src/api.ts` — cliente HTTP a `/api/generate` y `/api/github/fix`
+  - `src/git.ts` — `getGitContext()`, `getWorkspacePath()`, `toRepoContext()`, `hasDirtyStatus()`
+  - `src/auth.ts` — SecretStorage, login via browser, UriHandler callback, auto-timeout 120s
+  - `src/terminal.ts` — preview + confirm + `sendText()`, detección de riesgo por keywords
+  - `esbuild.js` — bundle único `dist/extension.js`, watch mode con `--watch`
+  - `.vscodeignore` — excluye src/, node_modules/, tsconfig en producción
+  - `README.md` — instrucciones de desarrollo y publicación
+- Build: `node esbuild.js` → `dist/extension.js` (1.6 KB minified)
+- Package: `vsce package` → `dist/gitspeak.vsix` (4.9 KB, 0 warnings)
+- `gitspeak.apiUrl` configurable vía VS Code settings, default `https://www.prompt2git.com`
 
 ---
 

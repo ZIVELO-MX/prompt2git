@@ -1,7 +1,59 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateFix } from '@/lib/ai-provider'
+import { checkRateLimit, FREE_LIMIT, PRO_LIMIT } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
+
+async function getProviderConfig(userId: string): Promise<{
+  plan: 'free' | 'pro'
+  provider: string
+  apiKey: string
+  model: string
+  dailyLimit: number
+}> {
+  const supabase = await createClient()
+
+  const { data: providerConfig } = await supabase
+    .from('provider_keys')
+    .select('id, provider, model, vault_id')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (providerConfig) {
+    const admin = createAdminClient()
+    const { data: secret } = await admin
+      .schema('vault')
+      .from('decrypted_secrets')
+      .select('decrypted_secret')
+      .eq('id', providerConfig.vault_id)
+      .maybeSingle()
+
+    if (secret?.decrypted_secret) {
+      return {
+        plan: 'pro',
+        provider: providerConfig.provider,
+        apiKey: secret.decrypted_secret,
+        model: providerConfig.model,
+        dailyLimit: PRO_LIMIT,
+      }
+    }
+  }
+
+  const platformKey = process.env.OPENROUTER_API_KEY
+  if (!platformKey) {
+    throw new Error('free_tier_unavailable')
+  }
+
+  return {
+    plan: 'free',
+    provider: 'openrouter',
+    apiKey: platformKey,
+    model: 'meta-llama/llama-3.1-8b-instruct:free',
+    dailyLimit: FREE_LIMIT,
+  }
+}
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -21,40 +73,28 @@ export async function POST(request: Request) {
     )
   }
 
-  const { data: providerConfig, error: configError } = await supabase
-    .from('provider_keys')
-    .select('id, provider, model, vault_id')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  if (configError || !providerConfig) {
+  let providerConfig: Awaited<ReturnType<typeof getProviderConfig>>
+  try {
+    providerConfig = await getProviderConfig(user.id)
+  } catch {
     return NextResponse.json(
-      { error: 'No hay ningún proveedor de AI configurado. Configurá una API key en Ajustes.' },
-      { status: 400 }
+      { error: 'No hay proveedor configurado y el plan free no está disponible.' },
+      { status: 503 }
     )
   }
 
-  const admin = createAdminClient()
-  const { data: secret, error: vaultError } = await admin
-    .schema('vault')
-    .from('decrypted_secrets')
-    .select('decrypted_secret')
-    .eq('id', providerConfig.vault_id)
-    .maybeSingle()
-
-  if (vaultError || !secret?.decrypted_secret) {
+  const rateLimit = await checkRateLimit(user.id, providerConfig.dailyLimit)
+  if (!rateLimit.allowed) {
     return NextResponse.json(
-      { error: 'Error al leer la API key. Intentá configurarla de nuevo en Ajustes.' },
-      { status: 500 }
+      { error: 'rate_limit', remaining: 0, reset_at: rateLimit.resetAt },
+      { status: 429, headers: { 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': rateLimit.resetAt } }
     )
   }
 
   try {
     const result = await generateFix({
       provider: providerConfig.provider as Parameters<typeof generateFix>[0]['provider'],
-      apiKey: secret.decrypted_secret,
+      apiKey: providerConfig.apiKey,
       model: providerConfig.model,
       lang: lang ?? 'es',
     }, git_status, problem_description)

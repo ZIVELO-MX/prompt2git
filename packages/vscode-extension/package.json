@@ -1,0 +1,59 @@
+{
+  "name": "gitspeak",
+  "displayName": "GitSpeak — Natural language Git",
+  "description": "Describe what you want to do with Git in plain language, get the right command, and run it — all without leaving VS Code.",
+  "version": "0.1.0",
+  "publisher": "zivelo",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ZIVELO-MX/prompt2git.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": ["git", "natural-language", "prompt2git", "gitspeak"],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "gitspeak.open",
+        "title": "GitSpeak: Open prompt panel"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "gitspeak.open",
+        "key": "ctrl+shift+g",
+        "mac": "cmd+shift+g"
+      }
+    ],
+    "configuration": {
+      "title": "GitSpeak",
+      "properties": {
+        "gitspeak.apiUrl": {
+          "type": "string",
+          "default": "https://www.prompt2git.com",
+          "description": "Base URL of the GitSpeak API server"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "dev": "node esbuild.js --watch",
+    "build": "node esbuild.js",
+    "package": "vsce package --out dist/gitspeak.vsix",
+    "lint": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.96.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.7.0",
+    "@vscode/vsce": "^3.2.0"
+  }
+}

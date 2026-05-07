@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
 
+const VALID_PROVIDERS = ['anthropic', 'openai', 'gemini', 'groq', 'mistral', 'openrouter']
+
 // GET /api/keys — qué proveedores tiene configurados el usuario (sin exponer las keys)
 export async function GET() {
   const supabase = await createClient()
@@ -40,7 +42,7 @@ export async function POST(request: Request) {
   if (!provider || !model || !apiKey) {
     return NextResponse.json({ error: 'Faltan campos: provider, model, apiKey' }, { status: 400 })
   }
-  if (!['anthropic', 'openai', 'gemini'].includes(provider)) {
+  if (!VALID_PROVIDERS.includes(provider)) {
     return NextResponse.json({ error: 'Proveedor no soportado' }, { status: 400 })
   }
 
@@ -97,7 +99,7 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url)
   const provider = searchParams.get('provider')
 
-  if (!provider || !['anthropic', 'openai', 'gemini'].includes(provider)) {
+  if (!provider || !VALID_PROVIDERS.includes(provider)) {
     return NextResponse.json({ error: 'provider inválido' }, { status: 400 })
   }
 
