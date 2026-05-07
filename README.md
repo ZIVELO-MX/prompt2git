@@ -223,8 +223,38 @@ Modo oscuro/claro vía `data-theme` en `document.documentElement`.
 | 0 — MVP | Auth, traducción NL→Git, historial, multi-provider, landing | ✅ |
 | 1 — Escala | Cache semántico pgvector + rate limiting | ✅ |
 | 2 — Contexto | GitHub read-only + "Fix my repo" | ✅ |
-| 3 — Distribución | VS Code Extension | ⬜ |
+| 3 — Distribución | VS Code Extension | ✅ |
 | 4 — Retención | Memory layer + quick actions | ⬜ |
 | 5 — Monetización | Freemium completo (Stripe) | ⬜ |
 
 Ver [AI-COLLAB.md](./AI-COLLAB.md) para el detalle de tareas entre Claude y Opencode.
+
+---
+
+## VS Code Extension
+
+GitSpeak tiene una extensión oficial para VS Code disponible en `packages/vscode-extension/`.
+
+### Instalar desde Marketplace
+
+1. Abre VS Code → Extensions (`Cmd+Shift+X`).
+2. Busca **GitSpeak**.
+3. Click **Install**.
+
+### Instalar manualmente (VSIX)
+
+1. Descargá el `.vsix` desde la página de [Releases](https://github.com/ZIVELO-MX/prompt2git/releases).
+2. Extensions panel → `···` → **Install from VSIX…** → seleccioná el archivo.
+
+### Primer uso
+
+En el primer uso la extensión abre el browser en `https://www.prompt2git.com/login`.
+Después de autenticarte, el token queda guardado en VS Code Secret Storage — no hace falta volver a loguearse.
+
+### Uso
+
+- `Cmd+Shift+G` (macOS) / `Ctrl+Shift+G` (Windows/Linux) para abrir el panel.
+- Escribí lo que querés hacer en lenguaje natural → revisá el comando → **Run in terminal**.
+- Modo **Fix my repo**: describí el problema y GitSpeak sugiere un plan de recuperación paso a paso.
+
+Ver [`packages/vscode-extension/README.md`](./packages/vscode-extension/README.md) para desarrollo local y publicación.
