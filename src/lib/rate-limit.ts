@@ -6,9 +6,10 @@ export interface RateLimitResult {
   resetAt: string
 }
 
-const DAILY_LIMIT = 50
+export const FREE_LIMIT = 10
+export const PRO_LIMIT = 500
 
-export async function checkRateLimit(userId: string): Promise<RateLimitResult> {
+export async function checkRateLimit(userId: string, dailyLimit: number = FREE_LIMIT): Promise<RateLimitResult> {
   const today = new Date()
   today.setUTCHours(0, 0, 0, 0)
 
@@ -21,11 +22,11 @@ export async function checkRateLimit(userId: string): Promise<RateLimitResult> {
 
   if (error) {
     console.error('Rate limit check error:', error)
-    return { allowed: true, remaining: DAILY_LIMIT, resetAt: '' }
+    return { allowed: true, remaining: dailyLimit, resetAt: '' }
   }
 
   const used = count ?? 0
-  const remaining = Math.max(0, DAILY_LIMIT - used)
+  const remaining = Math.max(0, dailyLimit - used)
 
   const tomorrow = new Date(today)
   tomorrow.setUTCDate(tomorrow.getUTCDate() + 1)
