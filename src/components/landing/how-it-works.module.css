@@ -63,6 +63,7 @@
   border: 1px solid var(--border);
   border-radius: 14px;
   overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
   box-shadow: 0 20px 60px oklch(0 0 0 / 0.35);
   animation: cardFadeUp 0.3s ease both;
 }

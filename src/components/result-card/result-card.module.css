@@ -42,12 +42,33 @@
   font-weight: 600;
   color: var(--accent);
   background: var(--accent-dim);
+  border: 1px solid rgba(69,206,58,0.3);
   border: 1px solid oklch(0.75 0.22 142 / 0.3);
   border-radius: 4px;
   padding: 2px 7px;
   letter-spacing: 0.02em;
   animation: popIn 0.2s ease both;
 }
+
+.codeHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.starBtn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 3px 8px;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.starBtn:hover { border-color: var(--amber); color: var(--amber); }
+.starBtn.starred { border-color: var(--amber); color: var(--amber); }
 
 .copyBtn {
   display: flex;

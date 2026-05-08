@@ -5,6 +5,7 @@
 /* ── Nav ── */
 .nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px;
+  background: rgba(3,6,9,0.85);
   background: oklch(0.12 0.01 240 / 0.85);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-subtle);
@@ -29,6 +30,7 @@
 .navLinks a { font-size: 13.5px; color: var(--text-secondary); transition: color 0.15s; }
 .navLinks a:hover { color: var(--text-primary); }
 .navCta {
+  background: var(--accent); color: #020507;
   background: var(--accent); color: oklch(0.11 0.01 240);
   font-family: var(--font-sans); font-size: 13px; font-weight: 600;
   padding: 7px 18px; border-radius: 6px; border: none; cursor: pointer;
@@ -75,6 +77,7 @@
 }
 .toggleOptActive { color: var(--text-primary); }
 .discountBadge {
+  background: var(--accent-dim); border: 1px solid rgba(69,206,58,0.35);
   background: var(--accent-dim); border: 1px solid oklch(0.75 0.22 142 / 0.35);
   color: var(--accent); font-family: var(--font-mono);
   font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px;
@@ -89,13 +92,16 @@
   display: flex; flex-direction: column; position: relative;
   transition: border-color 0.2s, transform 0.2s;
 }
+.plan:hover { border-color: #282f34; transform: translateY(-2px); }
 .plan:hover { border-color: oklch(0.30 0.014 240); transform: translateY(-2px); }
 .planFeatured {
   border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-dim), 0 8px 32px rgba(73,210,62,0.1);
   box-shadow: 0 0 0 1px var(--accent-dim), 0 8px 32px oklch(0.76 0.22 142 / 0.1);
 }
 .planTag {
   position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+  background: var(--accent); color: #020507;
   background: var(--accent); color: oklch(0.11 0.01 240);
   font-family: var(--font-sans); font-size: 10px; font-weight: 700;
   letter-spacing: 0.08em; padding: 3px 14px; border-radius: 12px;
@@ -104,6 +110,7 @@
 .planSoon {
   position: absolute; top: 16px; right: 16px;
   background: var(--purple-dim); color: var(--purple);
+  border: 1px solid rgba(174,137,255,0.3);
   border: 1px solid oklch(0.72 0.18 295 / 0.3);
   font-family: var(--font-mono); font-size: 9.5px; font-weight: 600;
   letter-spacing: 0.06em; padding: 2px 7px; border-radius: 4px;
@@ -112,8 +119,11 @@
   width: 36px; height: 36px; border-radius: 9px;
   display: flex; align-items: center; justify-content: center; margin-bottom: 16px;
 }
+.planIconStarter { background: var(--blue-dim); border: 1px solid rgba(25,175,254,0.3); }
 .planIconStarter { background: var(--blue-dim); border: 1px solid oklch(0.72 0.16 240 / 0.3); }
+.planIconPro { background: var(--accent-dim); border: 1px solid rgba(69,206,58,0.3); }
 .planIconPro { background: var(--accent-dim); border: 1px solid oklch(0.75 0.22 142 / 0.3); }
+.planIconTeams { background: var(--purple-dim); border: 1px solid rgba(174,137,255,0.3); }
 .planIconTeams { background: var(--purple-dim); border: 1px solid oklch(0.72 0.18 295 / 0.3); }
 .planName {
   font-size: 12px; font-weight: 600; color: var(--text-secondary);
@@ -132,6 +142,7 @@
   margin-bottom: 20px;
 }
 .planCtaPrimary {
+  background: var(--accent); color: #020507;
   background: var(--accent); color: oklch(0.11 0.01 240);
   border: 1px solid var(--accent); box-shadow: 0 0 16px var(--accent-glow);
 }
@@ -173,6 +184,7 @@
 .table thead th span { display: block; font-family: var(--font-mono); font-weight: 700; font-size: 14px; color: var(--text-primary); text-transform: none; letter-spacing: -0.02em; margin-top: 2px; }
 .thProFeatured { background: var(--accent-dim) !important; color: var(--accent) !important; }
 .thProFeatured span { color: var(--accent) !important; }
+.tdProFeatured { background: rgba(73,210,62,0.03); }
 .tdProFeatured { background: oklch(0.76 0.22 142 / 0.03); }
 .catRow td { background: var(--bg-elevated); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); padding: 8px 18px; }
 .featName { font-size: 13px; font-weight: 500; color: var(--text-primary); }

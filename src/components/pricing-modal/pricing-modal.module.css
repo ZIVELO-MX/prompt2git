@@ -1,6 +1,7 @@
 /* ── Backdrop ── */
 .backdrop {
   position: fixed; inset: 0; z-index: 9000;
+  background: rgba(0,0,0,0.72);
   background: oklch(0 0 0 / 0.72);
   backdrop-filter: blur(6px);
   display: flex; align-items: center; justify-content: center;
@@ -16,6 +17,7 @@
   border-radius: 20px;
   width: 100%; max-width: 860px;
   max-height: 92vh; overflow-y: auto;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.5);
   box-shadow: 0 32px 80px oklch(0 0 0 / 0.5);
   animation: slideUp 0.2s ease;
 }
@@ -59,6 +61,7 @@
 }
 .toggleOptActive { color: var(--text-primary); }
 .saveBadge {
+  background: var(--accent-dim); border: 1px solid rgba(69,206,58,0.35);
   background: var(--accent-dim); border: 1px solid oklch(0.75 0.22 142 / 0.35);
   color: var(--accent); font-family: var(--font-mono);
   font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; white-space: nowrap;
@@ -82,13 +85,16 @@
   display: flex; flex-direction: column; position: relative;
   transition: border-color 0.2s, transform 0.2s;
 }
+.plan:hover { border-color: #282f34; transform: translateY(-2px); }
 .plan:hover { border-color: oklch(0.30 0.014 240); transform: translateY(-2px); }
 .planFeatured {
   border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-dim), 0 8px 24px rgba(73,210,62,0.1);
   box-shadow: 0 0 0 1px var(--accent-dim), 0 8px 24px oklch(0.76 0.22 142 / 0.1);
 }
 .planTag {
   position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+  background: var(--accent); color: #020507;
   background: var(--accent); color: oklch(0.11 0.01 240);
   font-family: var(--font-sans); font-size: 9.5px; font-weight: 700;
   letter-spacing: 0.07em; padding: 3px 12px; border-radius: 10px;
@@ -97,6 +103,7 @@
 .planSoon {
   position: absolute; top: 14px; right: 14px;
   background: var(--purple-dim); color: var(--purple);
+  border: 1px solid rgba(174,137,255,0.3);
   border: 1px solid oklch(0.72 0.18 295 / 0.3);
   font-family: var(--font-mono); font-size: 9px; font-weight: 600;
   letter-spacing: 0.06em; padding: 2px 6px; border-radius: 4px;
@@ -114,6 +121,7 @@
   display: flex; align-items: center; justify-content: center;
   margin-bottom: 18px; border: 1px solid transparent;
 }
+.planCtaPrimary { background: var(--accent); color: #020507; border-color: var(--accent); box-shadow: 0 0 14px var(--accent-glow); }
 .planCtaPrimary { background: var(--accent); color: oklch(0.11 0.01 240); border-color: var(--accent); box-shadow: 0 0 14px var(--accent-glow); }
 .planCtaPrimary:hover { box-shadow: 0 0 22px var(--accent-glow); transform: translateY(-1px); }
 .planCtaGhost { background: transparent; color: var(--text-secondary); border-color: var(--border); }

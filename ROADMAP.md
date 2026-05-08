@@ -107,6 +107,16 @@ Antes de compartir el link con el mundo.
 
 ## Fase 5 — Crecimiento (post-lanzamiento)
 
+### AI Gateway — Plan-based model routing
+Cuando la monetización esté activa, extender el sistema de fallback para seleccionar el modelo según el plan del usuario:
+- `free` → siempre modelo económico (openrouter free tier)
+- `pro` → modelo balanceado (ej. gpt-4o-mini, claude-haiku)
+- `pro_plus` → mejor modelo disponible (ej. gpt-4o, claude-sonnet)
+
+Implementar en `src/lib/ai-provider.ts` como una función `selectModelTier(plan, provider)` que devuelve el model ID correcto. No requiere nuevas dependencias; extiende el `PROVIDER_MAP` existente.
+
+
+
 Features que agregan valor sin comprometer la simpleza.
 
 - [ ] **Comandos públicos** — opción de marcar un comando como público y obtener un link para compartir (`prompt2git.app/c/<slug>`)

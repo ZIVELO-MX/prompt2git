@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import styles from './email-cta.module.css'
 
 export function EmailCTA() {
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'error' | 'done'>('idle')
+  const router = useRouter()
 
   function handleSignup() {
     if (!email.trim() || !email.includes('@')) {
@@ -14,6 +16,10 @@ export function EmailCTA() {
       return
     }
     setStatus('done')
+    // Redirige a login con el email pre-llenado como query param
+    setTimeout(() => {
+      router.push(`/login?email=${encodeURIComponent(email.trim())}`)
+    }, 800)
   }
 
   return (

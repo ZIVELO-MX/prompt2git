@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { generateFix } from '@/lib/ai-provider'
+import { generateFixWithFallback, type ProviderConfig } from '@/lib/ai-provider'
 import { checkRateLimit, FREE_LIMIT, PRO_LIMIT } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 
@@ -63,12 +63,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 
-  const body = await request.json() as { git_status: string; problem_description: string; lang?: 'es' | 'en' }
-  const { git_status, problem_description, lang } = body
+  const body = await request.json() as { git_status: string; problem_desc: string; lang?: 'es' | 'en' }
+  const { git_status, problem_desc, lang } = body
 
-  if (!git_status?.trim() || !problem_description?.trim()) {
+  if (!git_status?.trim() || !problem_desc?.trim()) {
     return NextResponse.json(
-      { error: 'Faltan campos: git_status y problem_description son requeridos' },
+      { error: 'Faltan campos: git_status y problem_desc son requeridos' },
       { status: 400 }
     )
   }
@@ -92,12 +92,25 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await generateFix({
-      provider: providerConfig.provider as Parameters<typeof generateFix>[0]['provider'],
+    const primaryConfig: ProviderConfig = {
+      provider: providerConfig.provider as ProviderConfig['provider'],
       apiKey: providerConfig.apiKey,
       model: providerConfig.model,
       lang: lang ?? 'es',
-    }, git_status, problem_description)
+    }
+
+    const configs: ProviderConfig[] = [primaryConfig]
+    const platformKey = process.env.OPENROUTER_API_KEY
+    if (platformKey && providerConfig.provider !== 'openrouter') {
+      configs.push({
+        provider: 'openrouter',
+        apiKey: platformKey,
+        model: 'meta-llama/llama-3.1-8b-instruct:free',
+        lang: lang ?? 'es',
+      })
+    }
+
+    const result = await generateFixWithFallback(configs, git_status, problem_desc, user.id)
 
     return NextResponse.json(result)
   } catch (err) {

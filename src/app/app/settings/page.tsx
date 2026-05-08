@@ -361,25 +361,28 @@ export default function SettingsPage() {
   const [connectedKeys, setConnectedKeys] = useState<ConnectedKey[]>([])
   const [loading, setLoading]             = useState(true)
   const [lang, setLang]                   = useState<Lang>('es')
+  const [monthlyUsage, setMonthlyUsage]   = useState<{ used: number; limit: number; plan: string } | null>(null)
 
   useEffect(() => { setLang(getStoredLang()) }, [])
 
   useEffect(() => {
-    // TODO(O-05): reemplazar por llamada real a GET /api/settings/keys
-    // El endpoint devuelve la lista de providers con model (sin key)
-    fetch('/api/settings/keys')
+    fetch('/api/keys')
       .then(r => r.ok ? r.json() : Promise.reject())
-      .then((data: ConnectedKey[]) => setConnectedKeys(data))
+      .then((data: { providers: ConnectedKey[] }) => setConnectedKeys(data.providers))
       .catch(() => {/* no keys or not yet implemented */})
       .finally(() => setLoading(false))
+
+    fetch('/api/usage/month')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.limit) setMonthlyUsage(d) })
+      .catch(() => {})
   }, [])
 
   const handleSave = async (provider: Provider, key: string, model: string) => {
-    // TODO(O-05): este endpoint debe cifrar la key con Vault antes de guardar
-    const res = await fetch('/api/settings/keys', {
+    const res = await fetch('/api/keys', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ provider, key, model }),
+      body: JSON.stringify({ provider, apiKey: key, model }),
     })
     if (!res.ok) {
       const body = await res.json().catch(() => ({})) as { error?: string }
@@ -392,8 +395,7 @@ export default function SettingsPage() {
   }
 
   const handleRemove = async (provider: Provider) => {
-    // TODO(O-05): este endpoint debe eliminar el secreto de Vault también
-    const res = await fetch(`/api/settings/keys?provider=${provider}`, { method: 'DELETE' })
+    const res = await fetch(`/api/keys?provider=${provider}`, { method: 'DELETE' })
     if (!res.ok) throw new Error(`Error ${res.status}`)
     setConnectedKeys(prev => prev.filter(k => k.provider !== provider))
   }
@@ -424,6 +426,37 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {monthlyUsage && (
+        <div className={styles.section}>
+          <span className={styles.sectionLabel}>PLAN ACTIVO</span>
+          <div className={styles.planCard}>
+            <div className={styles.planInfo}>
+              <span className={styles.planName}>{monthlyUsage.plan.toUpperCase()}</span>
+              <span className={styles.planUsage}>
+                <span className={monthlyUsage.used >= monthlyUsage.limit - 4 ? styles.planUsageCritical : ''}>
+                  {monthlyUsage.used}
+                </span>
+                /{monthlyUsage.limit} comandos este mes
+              </span>
+            </div>
+            <div className={styles.planBar}>
+              <div
+                className={styles.planBarFill}
+                style={{
+                  width: `${Math.min(100, (monthlyUsage.used / monthlyUsage.limit) * 100)}%`,
+                  background: monthlyUsage.used >= monthlyUsage.limit - 4 ? 'oklch(0.65 0.20 22)' : 'var(--accent)',
+                }}
+              />
+            </div>
+            {monthlyUsage.plan === 'starter' && (
+              <Link href="/pricing" className={styles.planUpgradeBtn}>
+                Upgrade a Pro — comandos ilimitados →
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className={styles.section}>
         <span className={styles.sectionLabel}>{t('settings.github.section', lang)}</span>

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { generate } from '@/lib/ai-provider'
+import { generateWithFallback, type ProviderConfig } from '@/lib/ai-provider'
 import { generateEmbedding } from '@/lib/embeddings'
 import { checkRateLimit, FREE_LIMIT, PRO_LIMIT } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
@@ -180,13 +180,27 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await generate({
-      provider: providerConfig.provider as Parameters<typeof generate>[0]['provider'],
+    const primaryConfig: ProviderConfig = {
+      provider: providerConfig.provider as ProviderConfig['provider'],
       apiKey: providerConfig.apiKey,
       model: providerConfig.model,
       lang: lang ?? 'es',
       repoContext,
-    }, input)
+    }
+
+    const configs: ProviderConfig[] = [primaryConfig]
+    const platformKey = process.env.OPENROUTER_API_KEY
+    if (platformKey && providerConfig.provider !== 'openrouter') {
+      configs.push({
+        provider: 'openrouter',
+        apiKey: platformKey,
+        model: 'meta-llama/llama-3.1-8b-instruct:free',
+        lang: lang ?? 'es',
+        repoContext,
+      })
+    }
+
+    const result = await generateWithFallback(configs, input, user.id)
 
     const commandId = crypto.randomUUID()
     const now = new Date().toISOString()
@@ -198,8 +212,8 @@ export async function POST(request: Request) {
       command: result.command,
       explanation: JSON.stringify(result.explanation),
       flags: JSON.stringify(result.flags),
-      provider: providerConfig.provider,
-      model: providerConfig.model,
+      provider: result.provider,
+      model: result.model,
       created_at: now,
     }
 
@@ -219,8 +233,8 @@ export async function POST(request: Request) {
         command: result.command,
         explanation: result.explanation,
         flags: result.flags,
-        provider: providerConfig.provider,
-        model: providerConfig.model,
+        provider: result.provider,
+        model: result.model,
         created_at: now,
         from_cache: false,
       },
