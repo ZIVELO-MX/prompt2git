@@ -116,10 +116,8 @@ export function Onboarding() {
             <button className={styles.btnBack} onClick={back}>← Atrás</button>
           )}
           {step === 1 ? (
-            <Link href="/app/settings" style={{ flex: 1 }} onClick={dismiss}>
-              <button className={styles.btnNext} style={{ width: '100%' }}>
-                Ir a Settings →
-              </button>
+            <Link href="/app/settings" className={styles.btnNext} onClick={dismiss} style={{ flex: 1, width: '100%', textAlign: 'center', textDecoration: 'none' }}>
+              Ir a Settings →
             </Link>
           ) : (
             <button className={styles.btnNext} onClick={next}>

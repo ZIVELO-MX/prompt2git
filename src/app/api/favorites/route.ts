@@ -41,6 +41,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Faltan campos: input, command' }, { status: 400 })
   }
 
+  const { data: existing } = await supabase
+    .from('user_favorites')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('command_id', body.command_id ?? null)
+    .maybeSingle()
+
+  if (existing) {
+    return NextResponse.json({ error: 'Ya existe un favorito con ese comando' }, { status: 409 })
+  }
+
   const { data, error } = await supabase
     .from('user_favorites')
     .insert({
@@ -55,12 +66,7 @@ export async function POST(request: Request) {
     .select()
     .single()
 
-  if (error) {
-    if (error.code === '23505') {
-      return NextResponse.json({ error: 'Ya existe un favorito con ese comando' }, { status: 409 })
-    }
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   return NextResponse.json({ favorite: data }, { status: 201 })
 }
@@ -74,16 +80,16 @@ export async function DELETE(request: NextRequest) {
   }
 
   const { searchParams } = new URL(request.url)
-  const id = searchParams.get('id')
+  const commandId = searchParams.get('command_id')
 
-  if (!id) {
-    return NextResponse.json({ error: 'Falta parámetro: id' }, { status: 400 })
+  if (!commandId) {
+    return NextResponse.json({ error: 'Falta parámetro: command_id' }, { status: 400 })
   }
 
   const { error: deleteError } = await supabase
     .from('user_favorites')
     .delete()
-    .eq('id', id)
+    .eq('command_id', commandId)
     .eq('user_id', user.id)
 
   if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 })

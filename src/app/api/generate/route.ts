@@ -116,20 +116,21 @@ export async function POST(request: Request) {
 
   const rateLimit = await checkRateLimit(user.id, providerConfig.dailyLimit)
   if (!rateLimit.allowed) {
-    const planKey = providerConfig.plan === 'free' ? 'rate_limit_free' : 'rate_limit_pro'
     return NextResponse.json(
-      { error: planKey, remaining: 0, reset_at: rateLimit.resetAt },
+      { error: 'rate_limit', remaining: 0, reset_at: rateLimit.resetAt },
       { status: 429, headers: { 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': rateLimit.resetAt } }
     )
   }
 
   let fromCache = false
   const normalized = normalize(input)
+  let commandEmbedding: number[] | null = null
 
   try {
     const embeddingKey = await getEmbeddingKey(user.id)
     if (embeddingKey) {
-      const embedding = await generateEmbedding(normalized, embeddingKey)
+      commandEmbedding = await generateEmbedding(normalized, embeddingKey)
+      const embedding = commandEmbedding
 
       if (embedding.length > 0) {
         const { data: cached } = await supabase.rpc('match_commands', {
@@ -215,6 +216,7 @@ export async function POST(request: Request) {
       provider: result.provider,
       model: result.model,
       created_at: now,
+      ...(commandEmbedding ? { embedding: commandEmbedding } : {}),
     }
 
     const { error: insertError } = await supabase

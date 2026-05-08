@@ -205,7 +205,11 @@ export default function AppPage() {
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input: trimmed }),
+        body: JSON.stringify({
+          input: trimmed,
+          lang,
+          repoContext: (() => { try { const r = localStorage.getItem('p2g_active_repo'); return r ? JSON.parse(r) : null } catch { return null } })(),
+        }),
       })
 
       if (!res.ok) {
@@ -278,12 +282,12 @@ export default function AppPage() {
       try { localStorage.setItem('p2g_favorites', JSON.stringify(next)) } catch { /* ignore */ }
       // Sync con API cuando esté disponible (fire & forget)
       if (exists) {
-        fetch(`/api/favorites?id=${command.id}`, { method: 'DELETE' }).catch(() => {})
+        fetch(`/api/favorites?command_id=${command.id}`, { method: 'DELETE' }).catch(() => {})
       } else {
         fetch('/api/favorites', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ input: command.input, command: command.command, explanation: command.explanation, provider: command.provider, model: command.model }),
+          body: JSON.stringify({ command_id: command.id, input: command.input, command: command.command, explanation: command.explanation, provider: command.provider, model: command.model }),
         }).catch(() => {})
       }
       return next
@@ -305,6 +309,7 @@ export default function AppPage() {
           onClear={handleClear}
           favorites={favorites}
           onToggleFavorite={toggleFavorite}
+          lang={lang}
         />
       )}
 
