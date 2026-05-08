@@ -484,6 +484,39 @@
 
 .ghClearBtn:hover { color: var(--red); }
 
+/* ─── Coming soon (BYOK) ─────────────────── */
+
+.comingSoonCard {
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--surface-raised);
+}
+
+.comingSoonBadge {
+  display: inline-flex;
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: color-mix(in oklch, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in oklch, var(--accent) 30%, transparent);
+  border-radius: 20px;
+  padding: 3px 10px;
+}
+
+.comingSoonText {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
 /* ─── Responsive ─────────────────────────── */
 
 @media (max-width: 700px) {

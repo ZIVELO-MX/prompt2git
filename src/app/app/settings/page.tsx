@@ -2,84 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import type { Provider, GitHubRepo } from '@/types'
+import type { GitHubRepo } from '@/types'
 import { t, getStoredLang } from '@/lib/i18n'
 import type { Lang } from '@/lib/i18n'
 import styles from './settings.module.css'
-
-// ─── Provider config ──────────────────────────────────────────────────────────
-
-import {
-  AnthropicIcon,
-  OpenAIIcon,
-  GeminiIcon,
-  GroqIcon,
-  MistralIcon,
-  OpenRouterIcon,
-  GitHubIcon,
-} from '@/components/ui/icons'
-
-interface ProviderMeta {
-  id: Provider
-  name: string
-  icon: React.ReactNode
-  placeholder: string
-  models: string[]
-  docsUrl: string
-}
-
-const PROVIDERS: ProviderMeta[] = [
-  {
-    id: 'anthropic',
-    name: 'Anthropic',
-    icon: <AnthropicIcon />,
-    placeholder: 'sk-ant-...',
-    models: ['claude-haiku-4-5-20251001', 'claude-sonnet-4-6', 'claude-opus-4-7'],
-    docsUrl: 'https://console.anthropic.com/settings/keys',
-  },
-  {
-    id: 'openai',
-    name: 'OpenAI',
-    icon: <OpenAIIcon />,
-    placeholder: 'sk-...',
-    models: ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo'],
-    docsUrl: 'https://platform.openai.com/api-keys',
-  },
-  {
-    id: 'gemini',
-    name: 'Google Gemini',
-    icon: <GeminiIcon />,
-    placeholder: 'AIza...',
-    models: ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash'],
-    docsUrl: 'https://aistudio.google.com/app/apikey',
-  },
-  {
-    id: 'groq',
-    name: 'Groq',
-    icon: <GroqIcon />,
-    placeholder: 'gsk_...',
-    models: ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'mixtral-8x7b-32768', 'gemma2-9b-it'],
-    docsUrl: 'https://console.groq.com/keys',
-  },
-  {
-    id: 'mistral',
-    name: 'Mistral AI',
-    icon: <MistralIcon />,
-    placeholder: 'api key...',
-    models: ['mistral-small-latest', 'mistral-medium-latest', 'codestral-latest'],
-    docsUrl: 'https://console.mistral.ai/api-keys',
-  },
-  {
-    id: 'openrouter',
-    name: 'OpenRouter',
-    icon: <OpenRouterIcon />,
-    placeholder: 'sk-or-v1-...',
-    models: ['meta-llama/llama-3.1-8b-instruct:free', 'anthropic/claude-haiku-4-5', 'openai/gpt-4o-mini', 'google/gemini-flash-1.5'],
-    docsUrl: 'https://openrouter.ai/keys',
-  },
-]
-
-import { SettingsIcon } from '@/components/ui/icons'
+import { GitHubIcon, SettingsIcon } from '@/components/ui/icons'
 
 // ─── GitHub section ───────────────────────────────────────────────────────────
 
@@ -219,194 +146,20 @@ function GitHubSection({ lang }: { lang: Lang }) {
   )
 }
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface ConnectedKey {
-  provider: Provider
-  model: string
-}
-
-// ─── ProviderCard ─────────────────────────────────────────────────────────────
-
-interface ProviderCardProps {
-  meta: ProviderMeta
-  connected: ConnectedKey | null
-  onSave: (provider: Provider, key: string, model: string) => Promise<void>
-  onRemove: (provider: Provider) => Promise<void>
-}
-
-function ProviderCard({ meta, connected, onSave, onRemove }: ProviderCardProps) {
-  const defaultModel = meta.models[0] ?? ''
-  const [open, setOpen]     = useState(false)
-  const [key, setKey]       = useState('')
-  const [model, setModel]   = useState(connected?.model ?? defaultModel)
-  const [saving, setSaving] = useState(false)
-  const [error, setError]   = useState<string | null>(null)
-
-  const handleSave = async () => {
-    if (!key.trim()) { setError('Ingresa la API key.'); return }
-    setSaving(true)
-    setError(null)
-    try {
-      await onSave(meta.id, key.trim(), model)
-      setKey('')
-      setOpen(false)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error al guardar')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleRemove = async () => {
-    setSaving(true)
-    try {
-      await onRemove(meta.id)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <div className={`${styles.providerCard} ${connected ? styles.connected : ''}`}>
-      <div className={styles.providerHeader}>
-        <div className={styles.providerInfo}>
-          <div className={`${styles.providerIcon} ${styles[meta.id]}`}>
-            {meta.icon}
-          </div>
-          <div>
-            <div className={styles.providerName}>{meta.name}</div>
-            <div className={styles.providerMeta}>
-              {connected ? `Modelo: ${connected.model}` : 'Sin configurar'}
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.providerActions}>
-          <span className={`${styles.badge} ${connected ? styles.connected : styles.disconnected}`}>
-            {connected ? 'Conectado' : 'Sin conectar'}
-          </span>
-          {connected && (
-            <button type="button" className={styles.removeBtn} onClick={handleRemove} disabled={saving}>
-              Eliminar
-            </button>
-          )}
-          <button
-            type="button"
-            className={styles.configBtn}
-            onClick={() => setOpen(o => !o)}
-          >
-            {open ? 'Cancelar' : connected ? 'Editar' : 'Configurar'}
-          </button>
-        </div>
-      </div>
-
-      {open && (
-        <div className={styles.keyForm}>
-          <div className={styles.formRow}>
-            <label className={styles.formLabel} htmlFor={`key-${meta.id}`}>
-              API Key {connected ? '(dejar vacío para mantener la actual)' : ''}
-            </label>
-            <input
-              id={`key-${meta.id}`}
-              type="password"
-              className={styles.formInput}
-              value={key}
-              onChange={e => { setKey(e.target.value); setError(null) }}
-              placeholder={meta.placeholder}
-              autoComplete="off"
-            />
-          </div>
-
-          <div className={styles.formRow}>
-            <label className={styles.formLabel} htmlFor={`model-${meta.id}`}>
-              Modelo por defecto
-            </label>
-            <select
-              id={`model-${meta.id}`}
-              className={styles.modelSelect}
-              value={model}
-              onChange={e => setModel(e.target.value)}
-            >
-              {meta.models.map(m => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
-          </div>
-
-          {error && <p className={styles.formError}>{error}</p>}
-
-          <div className={styles.formFooter}>
-            <span className={styles.formNote}>
-              🔒 Cifrada con Supabase Vault — nunca se almacena en texto plano
-            </span>
-            <div className={styles.formButtons}>
-              <button type="button" className={styles.cancelBtn} onClick={() => { setOpen(false); setKey(''); setError(null) }}>
-                Cancelar
-              </button>
-              <button type="button" className={styles.saveBtn} onClick={handleSave} disabled={saving}>
-                {saving ? 'Guardando…' : 'Guardar'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ─── Settings Page ────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
-  const [connectedKeys, setConnectedKeys] = useState<ConnectedKey[]>([])
-  const [loading, setLoading]             = useState(true)
   const [lang, setLang]                   = useState<Lang>('es')
   const [monthlyUsage, setMonthlyUsage]   = useState<{ used: number; limit: number; plan: string } | null>(null)
 
   useEffect(() => { setLang(getStoredLang()) }, [])
 
   useEffect(() => {
-    fetch('/api/keys')
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then((data: { providers: ConnectedKey[] }) => setConnectedKeys(data.providers))
-      .catch(() => {/* no keys or not yet implemented */})
-      .finally(() => setLoading(false))
-
     fetch('/api/usage/month')
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d?.limit) setMonthlyUsage(d) })
       .catch(() => {})
   }, [])
-
-  const handleSave = async (provider: Provider, key: string, model: string) => {
-    const res = await fetch('/api/keys', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ provider, apiKey: key, model }),
-    })
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({})) as { error?: string }
-      throw new Error(body.error ?? `Error ${res.status}`)
-    }
-    setConnectedKeys(prev => {
-      const filtered = prev.filter(k => k.provider !== provider)
-      return [...filtered, { provider, model }]
-    })
-  }
-
-  const handleRemove = async (provider: Provider) => {
-    const res = await fetch(`/api/keys?provider=${provider}`, { method: 'DELETE' })
-    if (!res.ok) throw new Error(`Error ${res.status}`)
-    setConnectedKeys(prev => prev.filter(k => k.provider !== provider))
-  }
-
-  if (loading) {
-    return (
-      <div className={styles.root}>
-        <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Cargando…</p>
-      </div>
-    )
-  }
 
   return (
     <div className={styles.root}>
@@ -421,7 +174,7 @@ export default function SettingsPage() {
           <div className={styles.headerContent}>
             <h1 className={styles.title}>Configuración</h1>
             <p className={styles.subtitle}>
-              Tus API keys se cifran con Supabase Vault y nunca salen del servidor.
+              Gestiona tu cuenta, plan y conexiones de GitHub.
             </p>
           </div>
         </div>
@@ -464,25 +217,12 @@ export default function SettingsPage() {
       </div>
 
       <div className={styles.section}>
-        <span className={styles.sectionLabel}>PROVEEDORES DE IA</span>
-        <div className={styles.providersGrid}>
-          {PROVIDERS.map(meta => (
-            <ProviderCard
-              key={meta.id}
-              meta={meta}
-              connected={connectedKeys.find(k => k.provider === meta.id) ?? null}
-              onSave={handleSave}
-              onRemove={handleRemove}
-            />
-          ))}
-          <div className={styles.lowCostNote}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="16" x2="12" y2="12"/>
-              <line x1="12" y1="8" x2="12.01" y2="8"/>
-            </svg>
-            <span>Cada solicitud se procesa en el modelo de <strong>bajo consumo</strong> de cada proveedor (ej. Claude Haiku, GPT-4o-mini, Gemini Flash), lo que garantiza respuestas rápidas y económicas. Puedes cambiar el modelo en la configuración de cada proveedor.</span>
-          </div>
+        <span className={styles.sectionLabel}>PROVEEDORES DE IA (BYOK)</span>
+        <div className={styles.comingSoonCard}>
+          <div className={styles.comingSoonBadge}>Próximamente · Plan Pro</div>
+          <p className={styles.comingSoonText}>
+            Conecta tus propias API keys de Anthropic, OpenAI, Gemini, Groq, Mistral u OpenRouter para procesar tus solicitudes directamente — sin límites de uso.
+          </p>
         </div>
       </div>
     </div>

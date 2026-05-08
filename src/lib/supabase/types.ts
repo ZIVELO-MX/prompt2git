@@ -12,65 +12,46 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       commands: {
         Row: {
           command: string
           created_at: string
+          embedding: string | null
           explanation: Json
           flags: Json
           id: string
           input: string
           model: string
           provider: string
+          search_vector: unknown
           user_id: string
         }
         Insert: {
           command: string
           created_at?: string
+          embedding?: string | null
           explanation: Json
           flags?: Json
           id?: string
           input: string
           model: string
           provider: string
+          search_vector?: unknown
           user_id: string
         }
         Update: {
           command?: string
           created_at?: string
+          embedding?: string | null
           explanation?: Json
           flags?: Json
           id?: string
           input?: string
           model?: string
           provider?: string
+          search_vector?: unknown
           user_id?: string
         }
         Relationships: []
@@ -126,12 +107,99 @@ export type Database = {
         }
         Relationships: []
       }
+      user_favorites: {
+        Row: {
+          command: string
+          command_id: string | null
+          created_at: string
+          explanation: Json
+          id: string
+          input: string
+          model: string
+          provider: string
+          user_id: string
+        }
+        Insert: {
+          command: string
+          command_id?: string | null
+          created_at?: string
+          explanation: Json
+          id?: string
+          input: string
+          model: string
+          provider: string
+          user_id: string
+        }
+        Update: {
+          command?: string
+          command_id?: string | null
+          created_at?: string
+          explanation?: Json
+          id?: string
+          input?: string
+          model?: string
+          provider?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          created_at: string
+          edu_mode: boolean
+          id: string
+          lang: string
+          provider: string | null
+          show_sidebar: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          edu_mode?: boolean
+          id?: string
+          lang?: string
+          provider?: string | null
+          show_sidebar?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          edu_mode?: boolean
+          id?: string
+          lang?: string
+          provider?: string | null
+          show_sidebar?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      match_commands: {
+        Args: {
+          match_count: number
+          match_threshold: number
+          query_embedding: string
+          query_user_id: string
+        }
+        Returns: {
+          command: string
+          created_at: string
+          explanation: Json
+          flags: Json
+          id: string
+          input: string
+          model: string
+          provider: string
+          similarity: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
@@ -260,9 +328,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

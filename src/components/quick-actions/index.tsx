@@ -20,8 +20,8 @@ export function QuickActions({ onSelect, lang }: Props) {
 
   useEffect(() => {
     fetch('/api/commands/popular')
-      .then(r => r.ok ? r.json() as Promise<{ commands: PopularCommand[] }> : null)
-      .then(d => { if (d?.commands) setPopular(d.commands) })
+      .then(r => r.ok ? r.json() as Promise<{ popular: PopularCommand[] }> : null)
+      .then(d => { if (d?.popular) setPopular(d.popular) })
       .catch(() => {})
   }, [])
 

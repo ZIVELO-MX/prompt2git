@@ -10,10 +10,11 @@ import styles from './sidebar.module.css'
 interface ItemProps {
   item: Command
   active: boolean
+  lang: string
   onSelect: (item: Command) => void
 }
 
-function HistoryItem({ item, active, onSelect }: ItemProps) {
+function HistoryItem({ item, active, lang, onSelect }: ItemProps) {
   return (
     <button
       type="button"
@@ -27,7 +28,7 @@ function HistoryItem({ item, active, onSelect }: ItemProps) {
         <code className={styles.itemCommand}>
           {item.command.length > 30 ? item.command.slice(0, 30) + '…' : item.command}
         </code>
-        <span className={styles.itemTime}>{timeAgo(new Date(item.created_at).getTime())}</span>
+        <span className={styles.itemTime}>{timeAgo(new Date(item.created_at).getTime(), lang)}</span>
       </span>
     </button>
   )
@@ -40,9 +41,10 @@ interface SidebarProps {
   onClear: () => void
   favorites?: Command[]
   onToggleFavorite?: (item: Command) => void
+  lang?: string
 }
 
-export function Sidebar({ history, activeId, onSelect, onClear, favorites = [], onToggleFavorite }: SidebarProps) {
+export function Sidebar({ history, activeId, onSelect, onClear, favorites = [], onToggleFavorite, lang = 'es' }: SidebarProps) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Command[] | null>(null)
   const [searching, setSearching] = useState(false)
@@ -171,6 +173,7 @@ export function Sidebar({ history, activeId, onSelect, onClear, favorites = [], 
               key={item.id}
               item={item}
               active={item.id === activeId}
+              lang={lang}
               onSelect={(selected) => {
                 onSelect(selected)
                 setQuery('')
