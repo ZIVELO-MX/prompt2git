@@ -119,6 +119,25 @@
   align-items: center;
 }
 .navCta:hover { transform: translateY(-1px); box-shadow: 0 0 24px var(--accent-glow); }
+.langSwitch {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.03em;
+}
+.langSwitch:hover { border-color: var(--text-muted); color: var(--text-primary); }
+.compareBody code {
+  font-family: var(--font-mono); font-size: 12px;
+  background: var(--bg-elevated); border: 1px solid var(--border);
+  padding: 1px 6px; border-radius: 4px; color: var(--amber);
+}
 
 /* ── Hero ───────────────────────────────────── */
 .hero {

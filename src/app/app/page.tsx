@@ -319,7 +319,7 @@ export default function AppPage() {
             {!showSidebar && (
               <div className={styles.topBarBrand}>
                 <GitIcon />
-                <span className={styles.topBarBrandName}>GitSpeak</span>
+                <span className={styles.topBarBrandName}>Prompt2Git</span>
               </div>
             )}
             <span className={styles.topBarHint}>{t('app.title', lang)}</span>
