@@ -58,13 +58,13 @@ export default function LandingPage() {
                 </svg>
                 Empieza ahora
               </a>
-              <a href="/app" className={styles.btnGhost}>
+              <a href="/login" className={styles.btnGhost}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
                   <path d="M6.5 6C6.5 5.17 7.17 4.5 8 4.5s1.5.67 1.5 1.5c0 1-1.5 1.5-1.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                   <circle cx="8" cy="11.5" r="0.8" fill="currentColor" />
                 </svg>
-                Ir a la app
+                Iniciar sesión
               </a>
             </div>
 
@@ -194,9 +194,9 @@ export default function LandingPage() {
               </div>
               <div className={styles.featTitleRow}>
                 <div className={styles.featTitle}>Modo Educativo</div>
-                <span className={styles.featBadgeFree}>5 USOS/SEM · FREE</span>
+                <span className={styles.featBadgeFree}>GRATIS</span>
               </div>
-              <p className={styles.featText}>Activa el modo educativo y aprende el significado de cada flag con tooltips interactivos. <strong>5 usos gratuitos por semana</strong> — ilimitado en Pro.</p>
+              <p className={styles.featText}>Activa el modo educativo y aprende el significado de cada flag con tooltips interactivos. <strong>20 comandos gratis al mes</strong> — ilimitado en Pro.</p>
             </div>
 
             <div className={styles.featCard}>
@@ -211,10 +211,10 @@ export default function LandingPage() {
             </div>
 
             <div className={styles.featCard}>
-              <div className={styles.featIcon} style={{ background: 'var(--purple-dim)', border: '1px solid oklch(0.72 0.18 295 / 0.25)' }}>
+              <div className={styles.featIcon} style={{ background: 'var(--blue-dim)', border: '1px solid oklch(0.72 0.16 240 / 0.25)' }}>
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <circle cx="10" cy="10" r="7" stroke="oklch(0.72 0.18 295)" strokeWidth="1.5"/>
-                  <path d="M10 7v3l2 2" stroke="oklch(0.72 0.18 295)" strokeWidth="1.5" strokeLinecap="round"/>
+                  <circle cx="10" cy="10" r="7" stroke="oklch(0.72 0.16 240)" strokeWidth="1.5"/>
+                  <path d="M10 7v3l2 2" stroke="oklch(0.72 0.16 240)" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
               </div>
               <div className={styles.featTitle}>Multi-provider · Pro</div>
@@ -223,8 +223,11 @@ export default function LandingPage() {
             </div>
 
             <div className={styles.featCard}>
-              <div className={styles.featIcon} style={{ background: 'var(--green-dim)', border: '1px solid oklch(0.76 0.22 142 / 0.25)', color: 'oklch(0.76 0.22 142)' }}>
-                <ClockIcon />
+              <div className={styles.featIcon} style={{ background: 'var(--purple-dim)', border: '1px solid oklch(0.72 0.18 295 / 0.25)', color: 'oklch(0.72 0.18 295)' }}>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M15 8a5 5 0 0 0-9-2M5 12a5 5 0 0 0 9 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M14 3l2 3-3 2M6 17l-2-3 3-2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </div>
               <div className={styles.featTitle}>Historial sincronizado</div>
               <p className={styles.featText}>Iniciá sesión con Magic Link o GitHub y tu historial de comandos se sincroniza entre todos tus dispositivos.</p>
