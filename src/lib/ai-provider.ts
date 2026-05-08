@@ -1,4 +1,5 @@
 import type { Provider, GenerateResult, FixResult } from '@/types'
+import { logAIRequest } from '@/lib/ai-logger'
 
 export interface ProviderConfig {
   provider: Provider
@@ -225,4 +226,92 @@ export async function generateFix(config: ProviderConfig, gitStatus: string, pro
   }
 
   return parseFixResponse(raw)
+}
+
+export async function generateWithFallback(
+  configs: ProviderConfig[],
+  input: string,
+  userId: string,
+): Promise<GenerateResult & { provider: string; model: string }> {
+  let lastError: Error = new Error('No hay proveedores disponibles')
+
+  for (let i = 0; i < configs.length; i++) {
+    const config = configs[i]!
+    const isFallback = i > 0
+    const start = Date.now()
+    try {
+      const result = await generate(config, input)
+      logAIRequest({
+        userId,
+        provider: config.provider,
+        model: config.model,
+        latencyMs: Date.now() - start,
+        success: true,
+        inputLength: input.length,
+        isFallback,
+      })
+      return { ...result, provider: config.provider, model: config.model }
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      logAIRequest({
+        userId,
+        provider: config.provider,
+        model: config.model,
+        latencyMs: Date.now() - start,
+        success: false,
+        inputLength: input.length,
+        error: error.message,
+        isFallback,
+      })
+      if (error.message === 'not_git') throw error
+      lastError = error
+    }
+  }
+
+  throw lastError
+}
+
+export async function generateFixWithFallback(
+  configs: ProviderConfig[],
+  gitStatus: string,
+  problemDescription: string,
+  userId: string,
+): Promise<FixResult & { provider: string; model: string }> {
+  let lastError: Error = new Error('No hay proveedores disponibles')
+  const inputLength = gitStatus.length + problemDescription.length
+
+  for (let i = 0; i < configs.length; i++) {
+    const config = configs[i]!
+    const isFallback = i > 0
+    const start = Date.now()
+    try {
+      const result = await generateFix(config, gitStatus, problemDescription)
+      logAIRequest({
+        userId,
+        provider: config.provider,
+        model: config.model,
+        latencyMs: Date.now() - start,
+        success: true,
+        inputLength,
+        isFallback,
+      })
+      return { ...result, provider: config.provider, model: config.model }
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      logAIRequest({
+        userId,
+        provider: config.provider,
+        model: config.model,
+        latencyMs: Date.now() - start,
+        success: false,
+        inputLength,
+        error: error.message,
+        isFallback,
+      })
+      if (error.message === 'not_git') throw error
+      lastError = error
+    }
+  }
+
+  throw lastError
 }

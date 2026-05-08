@@ -61,6 +61,69 @@
   padding-bottom: 4px;
 }
 
+/* ─── Plan badge ───────────────────────────── */
+
+.planCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.planInfo {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.planName {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-dim);
+  border: 1px solid oklch(0.75 0.22 142 / 0.3);
+  border-radius: 4px;
+  padding: 2px 8px;
+  letter-spacing: 0.06em;
+}
+
+.planUsage {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.planUsageCritical {
+  color: oklch(0.65 0.20 22);
+  font-weight: 600;
+}
+
+.planBar {
+  height: 4px;
+  background: var(--bg-elevated);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.planBarFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.planUpgradeBtn {
+  font-size: 12.5px;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.15s;
+  align-self: flex-start;
+}
+.planUpgradeBtn:hover { opacity: 0.75; }
+
 .providersGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -394,6 +457,7 @@
   justify-content: space-between;
   gap: 8px;
   background: var(--accent-dim);
+  border: 1px solid rgba(69,206,58,0.3);
   border: 1px solid oklch(0.75 0.22 142 / 0.3);
   border-radius: 6px;
   padding: 8px 12px;

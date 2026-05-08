@@ -62,8 +62,11 @@
   letter-spacing: 0.05em; padding: 2px 6px; border-radius: 4px;
   white-space: nowrap;
 }
+.risk_low    { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(69,206,58,0.3); }
 .risk_low    { background: var(--accent-dim); color: var(--accent); border: 1px solid oklch(0.75 0.22 142 / 0.3); }
+.risk_medium { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(252,160,0,0.3); }
 .risk_medium { background: var(--amber-dim); color: var(--amber); border: 1px solid oklch(0.78 0.18 72 / 0.3); }
+.risk_high   { background: rgba(240,76,85,0.1); color: var(--red); border: 1px solid rgba(240,76,85,0.3); }
 .risk_high   { background: oklch(0.65 0.20 22 / 0.1); color: var(--red); border: 1px solid oklch(0.65 0.20 22 / 0.3); }
 
 .stepBody { flex: 1; min-width: 0; }

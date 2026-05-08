@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import type { Command, Provider, FixResult } from '@/types'
 import { Sidebar } from '@/components/sidebar'
 import { ResultCard } from '@/components/result-card'
+import { QuickActions } from '@/components/quick-actions'
 import Link from 'next/link'
 import { GitIcon, MortarboardIcon, SettingsIcon, SunIcon, MoonIcon } from '@/components/ui/icons'
 import { Onboarding } from '@/components/onboarding'
@@ -86,6 +87,9 @@ export default function AppPage() {
   const [rateLimitReset, setRateLimitReset] = useState<string | null>(null)
   const [lang, setLang] = useState<Lang>('es')
 
+  const [favorites, setFavorites]     = useState<Command[]>([])
+  const [monthlyUsage, setMonthlyUsage] = useState<{ used: number; limit: number; plan: string } | null>(null)
+
   const [fixMode, setFixMode]         = useState(false)
   const [gitStatus, setGitStatus]     = useState('')
   const [problemDesc, setProblemDesc] = useState('')
@@ -135,6 +139,16 @@ export default function AppPage() {
 
   useEffect(() => {
     fetchHistory()
+    // Cargar favoritos desde localStorage
+    try {
+      const stored = localStorage.getItem('p2g_favorites')
+      if (stored) setFavorites(JSON.parse(stored) as Command[])
+    } catch { /* ignore */ }
+    // Cargar uso mensual (C-25) — silencioso si no existe aún
+    fetch('/api/usage/month')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.limit) setMonthlyUsage(d) })
+      .catch(() => {})
   }, [])
 
   const fetchHistory = async () => {
@@ -257,6 +271,27 @@ export default function AppPage() {
     }
   }
 
+  const toggleFavorite = useCallback((command: Command) => {
+    setFavorites(prev => {
+      const exists = prev.some(f => f.id === command.id)
+      const next = exists ? prev.filter(f => f.id !== command.id) : [command, ...prev]
+      try { localStorage.setItem('p2g_favorites', JSON.stringify(next)) } catch { /* ignore */ }
+      // Sync con API cuando esté disponible (fire & forget)
+      if (exists) {
+        fetch(`/api/favorites?id=${command.id}`, { method: 'DELETE' }).catch(() => {})
+      } else {
+        fetch('/api/favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ input: command.input, command: command.command, explanation: command.explanation, provider: command.provider, model: command.model }),
+        }).catch(() => {})
+      }
+      return next
+    })
+  }, [])
+
+  const isFavorite = useCallback((id: string) => favorites.some(f => f.id === id), [favorites])
+
   const { showSidebar, eduMode } = tweaks
 
   return (
@@ -268,6 +303,8 @@ export default function AppPage() {
           activeId={activeId}
           onSelect={handleSelect}
           onClear={handleClear}
+          favorites={favorites}
+          onToggleFavorite={toggleFavorite}
         />
       )}
 
@@ -291,6 +328,17 @@ export default function AppPage() {
             >
               <MortarboardIcon /> {t('app.edu_mode', lang)}
             </button>
+
+            {monthlyUsage && monthlyUsage.plan === 'starter' && (
+              <button
+                type="button"
+                className={`${styles.usageBadge} ${monthlyUsage.used >= monthlyUsage.limit - 4 ? styles.usageCritical : ''}`}
+                onClick={() => monthlyUsage.used >= monthlyUsage.limit ? setShowPricing(true) : undefined}
+                title={`${monthlyUsage.used}/${monthlyUsage.limit} comandos este mes`}
+              >
+                {monthlyUsage.used}/{monthlyUsage.limit}
+              </button>
+            )}
 
             <button
               type="button"
@@ -456,10 +504,22 @@ export default function AppPage() {
             </div>
           )}
 
+          {!fixMode && (
+            <QuickActions
+              lang={lang}
+              onSelect={text => { setInput(text); setCharCount(text.length); inputRef.current?.focus() }}
+            />
+          )}
+
           {fixMode ? (
             fixResult ? <FixResultCard result={fixResult} lang={lang} /> : null
           ) : result ? (
-            <ResultCard result={result} eduMode={eduMode} />
+            <ResultCard
+              result={result}
+              eduMode={eduMode}
+              isFavorite={isFavorite(result.id)}
+              onToggleFavorite={() => toggleFavorite(result)}
+            />
           ) : (
             <div className={styles.empty}>
               <p className={styles.emptyHint}>

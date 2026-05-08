@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { GitIcon } from '@/components/ui/icons'
 import styles from './login.module.css'
@@ -17,20 +18,38 @@ function buildCallbackUrl(redirectUri: string | null): string {
 }
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [terms, setTerms] = useState(false)
 
   const searchParams = useSearchParams()
   const redirectUri = searchParams.get('redirect_uri')
+  const providerParam = searchParams.get('provider')
   const isExtension = redirectUri === ALLOWED_VSCODE_REDIRECT
 
   const supabase = createClient()
 
+  useEffect(() => {
+    // Auto-trigger solo si el usuario ya aceptó términos (extension flow)
+    if (providerParam === 'github' && !loading && terms) {
+      handleGitHub()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [terms])
+
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email.trim()) return
+    if (!email.trim() || !terms) return
 
     setLoading(true)
     setError(null)
@@ -50,6 +69,7 @@ export default function LoginPage() {
   }
 
   const handleGitHub = async () => {
+    if (!terms) return
     setLoading(true)
     setError(null)
 
@@ -120,7 +140,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 className={styles.primaryBtn}
-                disabled={loading || !email.trim()}
+                disabled={loading || !email.trim() || !terms}
               >
                 {loading ? 'Enviando…' : 'Enviar magic link →'}
               </button>
@@ -136,11 +156,26 @@ export default function LoginPage() {
               type="button"
               className={styles.githubBtn}
               onClick={handleGitHub}
-              disabled={loading}
+              disabled={loading || !terms}
             >
               <GitHubIcon />
               Continuar con GitHub
             </button>
+
+            <label className={styles.termsWrap}>
+              <input
+                type="checkbox"
+                className={styles.termsCheck}
+                checked={terms}
+                onChange={e => setTerms(e.target.checked)}
+              />
+              <span className={styles.termsLabel}>
+                Acepto los{' '}
+                <Link href="/terminos" target="_blank">Términos de Servicio</Link>
+                {' '}y la{' '}
+                <Link href="/privacidad" target="_blank">Política de Privacidad</Link>
+              </span>
+            </label>
           </>
         )}
       </div>

@@ -90,6 +90,7 @@ export async function POST(request: Request) {
 // DELETE /api/keys — eliminar key de un proveedor
 export async function DELETE(request: Request) {
   const supabase = await createClient()
+  const admin = createAdminClient()
 
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
@@ -112,6 +113,14 @@ export async function DELETE(request: Request) {
 
   if (!row) {
     return NextResponse.json({ error: 'No hay key para este proveedor' }, { status: 404 })
+  }
+
+  if (row.vault_id) {
+    try {
+      await admin.rpc('delete_secret', { secret_id: row.vault_id })
+    } catch {
+      // Si falla la limpieza de Vault, igual seguimos — el registro de provider_keys se elimina
+    }
   }
 
   const { error: deleteError } = await supabase
