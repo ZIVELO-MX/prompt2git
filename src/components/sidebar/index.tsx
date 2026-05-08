@@ -95,7 +95,7 @@ export function Sidebar({ history, activeId, onSelect, onClear, favorites = [], 
       <div className={styles.logo}>
         <GitIcon />
         <div>
-          <div className={styles.logoText}>GitSpeak</div>
+          <div className={styles.logoText}>Prompt2Git</div>
           <div className={styles.logoSub}>Natural Language → Git</div>
         </div>
       </div>

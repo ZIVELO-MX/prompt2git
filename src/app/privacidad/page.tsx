@@ -3,8 +3,8 @@ import type { Metadata } from 'next'
 import styles from './privacidad.module.css'
 
 export const metadata: Metadata = {
-  title: 'Política de Privacidad — GitSpeak',
-  description: 'Cómo GitSpeak recopila, usa y protege tu información personal.',
+  title: 'Política de Privacidad — Prompt2Git',
+  description: 'Cómo Prompt2Git recopila, usa y protege tu información personal.',
 }
 
 export default function PrivacidadPage() {

@@ -1,9 +1,31 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { HowItWorks } from '@/components/landing/how-it-works'
 import { ClockIcon } from '@/components/ui/icons'
+import { t, getStoredLang, setStoredLang, type Lang } from '@/lib/i18n'
 import styles from './page.module.css'
 
 export default function LandingPage() {
+  const [lang, setLang] = useState<Lang>('es')
+
+  useEffect(() => {
+    const stored = getStoredLang()
+    setLang(stored)
+    document.documentElement.lang = stored
+  }, [])
+
+  useEffect(() => {
+    document.documentElement.lang = lang
+  }, [lang])
+
+  function toggleLang() {
+    const next: Lang = lang === 'es' ? 'en' : 'es'
+    setLang(next)
+    setStoredLang(next)
+  }
+
   return (
     <div className={styles.root}>
 
@@ -22,13 +44,14 @@ export default function LandingPage() {
             <span className={styles.navWordmark}>Prompt<span>2</span>Git</span>
           </div>
           <ul className={styles.navLinks}>
-            <li><a href="#como-funciona">Cómo funciona</a></li>
-            <li><a href="#features">Features</a></li>
-            <li><a href="#comparativa">Comparativa</a></li>
-            <li><Link href="/pricing">Pricing</Link></li>
+            <li><a href="#como-funciona">{t('landing.nav.how', lang)}</a></li>
+            <li><a href="#features">{t('landing.nav.features', lang)}</a></li>
+            <li><a href="#comparativa">{t('landing.nav.compare', lang)}</a></li>
+            <li><Link href="/pricing">{t('landing.nav.pricing', lang)}</Link></li>
           </ul>
           <div className={styles.navActions}>
-            <a href="/login" className={styles.navCta}>Empieza ahora →</a>
+            <button onClick={toggleLang} className={styles.langSwitch}>{lang === 'es' ? 'EN' : 'ES'}</button>
+            <a href="/login" className={styles.navCta}>{t('landing.nav.cta', lang)}</a>
           </div>
         </div>
       </nav>
@@ -41,31 +64,20 @@ export default function LandingPage() {
           <div className={styles.heroContent}>
             <div className={styles.heroBadge}>
               <span className={styles.badgeDot} />
-              En producción · IA incluida · 20 comandos gratis
+              {t('landing.hero.badge', lang)}
             </div>
-            <h1 className={styles.heroTitle}>
-              Escribe en español.<br />
-              <em>Git</em> hace el resto.
-            </h1>
+            <h1 className={styles.heroTitle} dangerouslySetInnerHTML={{ __html: t('landing.hero.title', lang) }} />
             <p className={styles.heroSub}>
-              Describe lo que quieres hacer con tu repositorio en lenguaje natural
-              y obtén el comando Git exacto, explicado línea por línea.
+              {t('landing.hero.sub', lang)}
             </p>
             <div className={styles.heroActions}>
               <a href="/login" className={styles.btnPrimary}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M8 2l5 5-5 5M3 7h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                Empieza ahora
+                {t('landing.hero.cta', lang)}
               </a>
-              <a href="/login" className={styles.btnGhost}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M6.5 6C6.5 5.17 7.17 4.5 8 4.5s1.5.67 1.5 1.5c0 1-1.5 1.5-1.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  <circle cx="8" cy="11.5" r="0.8" fill="currentColor" />
-                </svg>
-                Iniciar sesión
-              </a>
+
             </div>
 
             {/* Terminal demo */}
@@ -81,11 +93,11 @@ export default function LandingPage() {
                 <div className={styles.terminalBody}>
                   <div>
                     <span style={{ color: 'var(--text-muted)' }}>❯ </span>
-                    <span>quiero deshacer mi último commit pero conservar los archivos</span>
+                    <span>{t('landing.terminal.prompt', lang)}</span>
                   </div>
                   <hr className={styles.tSep} />
                   <div style={{ marginBottom: '10px' }}>
-                    <span className={styles.tLabel}>COMANDO GENERADO</span><br />
+                    <span className={styles.tLabel}>{t('landing.terminal.generated', lang)}</span><br />
                     <span style={{ color: 'var(--text-muted)' }}>$ </span>
                     <span style={{ color: 'var(--accent)' }}>git reset </span>
                     <span style={{ color: 'var(--amber)' }}>--soft </span>
@@ -93,12 +105,8 @@ export default function LandingPage() {
                   </div>
                   <hr className={styles.tSep} />
                   <div>
-                    <span className={styles.tLabelAmber}>EXPLICACIÓN</span><br />
-                    <span className={styles.tExplain}>
-                      Mueve HEAD un commit hacia atrás conservando todos los cambios<br />
-                      en el staging area. Perfecto para reescribir el mensaje de commit<br />
-                      o añadir más cambios antes de confirmar.
-                    </span>
+                    <span className={styles.tLabelAmber}>{t('landing.terminal.explanation_label', lang)}</span><br />
+                    <span className={styles.tExplain}>{t('landing.terminal.explanation', lang)}</span>
                   </div>
                   <hr className={styles.tSep} />
                   <div>
@@ -115,26 +123,26 @@ export default function LandingPage() {
       {/* ── Stats ──────────────────────────────── */}
       <div className={styles.proof}>
         <div className={styles.container}>
-            <p className={styles.proofLabel}>IA incluida en el plan Free · Mayo 2026</p>
+            <p className={styles.proofLabel}>{t('landing.stats.label', lang)}</p>
             <div className={styles.proofStats}>
               <div className={styles.statItem}>
                 <span className={styles.statNum}>20<span>/mes</span></span>
-                <span className={styles.statLbl}>Comandos gratis</span>
+                <span className={styles.statLbl}>{t('landing.stats.free_cmds', lang)}</span>
               </div>
               <div className={styles.statDiv} />
               <div className={styles.statItem}>
                 <span className={styles.statNum}>✦</span>
-                <span className={styles.statLbl}>IA incluida · sin key</span>
+                <span className={styles.statLbl}>{t('landing.stats.ai_included', lang)}</span>
               </div>
               <div className={styles.statDiv} />
               <div className={styles.statItem}>
                 <span className={styles.statNum}>&lt;1<span>s</span></span>
-                <span className={styles.statLbl}>Tiempo de respuesta</span>
+                <span className={styles.statLbl}>{t('landing.stats.response_time', lang)}</span>
               </div>
               <div className={styles.statDiv} />
               <div className={styles.statItem}>
                 <span className={styles.statNum}>6</span>
-                <span className={styles.statLbl}>Providers en Pro · BYOK</span>
+                <span className={styles.statLbl}>{t('landing.stats.providers', lang)}</span>
               </div>
             </div>
         </div>
@@ -145,14 +153,12 @@ export default function LandingPage() {
       {/* ── How it works ───────────────────────── */}
       <section id="como-funciona" className={styles.section}>
         <div className={styles.container}>
-          <div className={styles.sectionLabel}>Cómo funciona</div>
-          <h2 className={styles.sectionTitle}>
-            De intención a comando<br /><strong>en tres pasos</strong>
-          </h2>
+          <div className={styles.sectionLabel}>{t('landing.how.label', lang)}</div>
+          <h2 className={styles.sectionTitle} dangerouslySetInnerHTML={{ __html: t('landing.how.title', lang) }} />
           <p className={styles.sectionSub}>
-            Sin memorizar flags. Sin buscar en Stack Overflow. Sin cometer errores costosos.
+            {t('landing.how.sub', lang)}
           </p>
-          <HowItWorks />
+          <HowItWorks lang={lang} />
         </div>
       </section>
 
@@ -161,10 +167,8 @@ export default function LandingPage() {
       {/* ── Features ───────────────────────────── */}
       <section id="features" className={styles.section}>
         <div className={styles.container}>
-          <div className={styles.sectionLabel}>Features</div>
-          <h2 className={styles.sectionTitle}>
-            Todo lo que necesitas<br /><strong>para dominar Git</strong>
-          </h2>
+          <div className={styles.sectionLabel}>{t('landing.features.label', lang)}</div>
+          <h2 className={styles.sectionTitle} dangerouslySetInnerHTML={{ __html: t('landing.features.title', lang) }} />
           <div className={styles.featuresGrid}>
             <div className={styles.featCard}>
               <div className={styles.featIcon} style={{ background: 'var(--accent-dim)', border: '1px solid oklch(0.75 0.22 142 / 0.25)' }}>
@@ -172,8 +176,8 @@ export default function LandingPage() {
                   <path d="M4 10l4 4 8-8" stroke="oklch(0.75 0.22 142)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
-              <div className={styles.featTitle}>Traducción exacta</div>
-              <p className={styles.featText}>Generamos el comando preciso para tu intención, con los flags y argumentos correctos. Sin aproximaciones.</p>
+              <div className={styles.featTitle}>{t('landing.features.exact_translation', lang)}</div>
+              <p className={styles.featText}>{t('landing.features.exact_translation_d', lang)}</p>
               <div className={styles.featCode}>git reset --soft HEAD~1</div>
             </div>
 
@@ -181,8 +185,8 @@ export default function LandingPage() {
               <div className={styles.featIcon} style={{ background: 'var(--amber-dim)', border: '1px solid oklch(0.78 0.18 72 / 0.25)', color: 'oklch(0.78 0.18 72)' }}>
                 <ClockIcon />
               </div>
-              <div className={styles.featTitle}>Historial de sesión</div>
-              <p className={styles.featText}>Todos tus comandos generados guardados y accesibles. Busca, reutiliza y adapta sin repetir tu intención.</p>
+              <div className={styles.featTitle}>{t('landing.features.history', lang)}</div>
+              <p className={styles.featText}>{t('landing.features.history_d', lang)}</p>
             </div>
 
             <div className={styles.featCard}>
@@ -193,10 +197,10 @@ export default function LandingPage() {
                 </svg>
               </div>
               <div className={styles.featTitleRow}>
-                <div className={styles.featTitle}>Modo Educativo</div>
-                <span className={styles.featBadgeFree}>GRATIS</span>
+                <div className={styles.featTitle}>{t('landing.features.edu', lang)}</div>
+                <span className={styles.featBadgeFree}>{t('landing.features.edu_badge', lang)}</span>
               </div>
-              <p className={styles.featText}>Activa el modo educativo y aprende el significado de cada flag con tooltips interactivos. <strong>20 comandos gratis al mes</strong> — ilimitado en Pro.</p>
+              <p className={styles.featText} dangerouslySetInnerHTML={{ __html: t('landing.features.edu_d', lang) }} />
             </div>
 
             <div className={styles.featCard}>
@@ -206,8 +210,8 @@ export default function LandingPage() {
                   <path d="M7 6V5a3 3 0 016 0v1" stroke="oklch(0.72 0.18 295)" strokeWidth="1.5" />
                 </svg>
               </div>
-              <div className={styles.featTitle}>Validación de intención</div>
-              <p className={styles.featText}>Si tu solicitud no es Git-relacionada, te lo indicamos. Sin comandos inventados ni alucinaciones peligrosas.</p>
+              <div className={styles.featTitle}>{t('landing.features.validation', lang)}</div>
+              <p className={styles.featText}>{t('landing.features.validation_d', lang)}</p>
             </div>
 
             <div className={styles.featCard}>
@@ -217,8 +221,8 @@ export default function LandingPage() {
                   <path d="M10 7v3l2 2" stroke="oklch(0.72 0.16 240)" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
               </div>
-              <div className={styles.featTitle}>Multi-provider · Pro</div>
-              <p className={styles.featText}>En el plan Pro conectás tu propia API key (BYOK) del proveedor que prefieras: Anthropic, OpenAI, Gemini, Groq, Mistral u OpenRouter. Comandos ilimitados, tus costos.</p>
+              <div className={styles.featTitle}>{t('landing.features.multi_provider', lang)}</div>
+              <p className={styles.featText}>{t('landing.features.multi_provider_d', lang)}</p>
               <div className={styles.featCode}>6 providers · BYOK en Pro</div>
             </div>
 
@@ -229,8 +233,8 @@ export default function LandingPage() {
                   <path d="M14 3l2 3-3 2M6 17l-2-3 3-2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <div className={styles.featTitle}>Historial sincronizado</div>
-              <p className={styles.featText}>Iniciá sesión con Magic Link o GitHub y tu historial de comandos se sincroniza entre todos tus dispositivos.</p>
+              <div className={styles.featTitle}>{t('landing.features.sync_history', lang)}</div>
+              <p className={styles.featText}>{t('landing.features.sync_history_d', lang)}</p>
             </div>
           </div>
         </div>
@@ -241,58 +245,56 @@ export default function LandingPage() {
       {/* ── Comparativa ────────────────────────── */}
       <section id="comparativa" className={styles.section}>
         <div className={styles.container}>
-          <div className={styles.sectionLabel}>Comparativa</div>
-          <h2 className={styles.sectionTitle}>
-            Antes y después de<br /><strong>Prompt2Git</strong>
-          </h2>
+          <div className={styles.sectionLabel}>{t('landing.compare.label', lang)}</div>
+          <h2 className={styles.sectionTitle} dangerouslySetInnerHTML={{ __html: t('landing.compare.title', lang) }} />
           <p className={styles.sectionSub}>
-            El flujo de trabajo tradicional con Git tiene demasiada fricción para quienes están aprendiendo.
+            {t('landing.compare.sub', lang)}
           </p>
           <div className={styles.compareWrap}>
             <div className={styles.compareCol}>
               <div className={styles.compareHeader}>
-                <span className={`${styles.compareBadge} ${styles.compareBadgeBefore}`}>SIN PROMPT2GIT</span>
+                <span className={`${styles.compareBadge} ${styles.compareBadgeBefore}`}>{t('landing.compare.before_badge', lang)}</span>
               </div>
               <div className={styles.compareBody}>
                 <div className={`${styles.compareRow} ${styles.compareRowBad}`}>
                   <span className={styles.iconBad}>✕</span>
-                  <span>Buscar en Google <em>&quot;git undo last commit&quot;</em>, elegir entre 5 respuestas contradictorias</span>
+                  <span dangerouslySetInnerHTML={{ __html: t('landing.compare.row1', lang) }} />
                 </div>
                 <div className={`${styles.compareRow} ${styles.compareRowBad}`}>
                   <span className={styles.iconBad}>✕</span>
-                  <span>Leer la documentación de <code className={styles.codeInline}>git reset</code> sin entender cuándo usar <code className={styles.codeInline}>--soft</code> vs <code className={styles.codeInline}>--hard</code></span>
+                  <span dangerouslySetInnerHTML={{ __html: t('landing.compare.row2', lang) }} />
                 </div>
                 <div className={`${styles.compareRow} ${styles.compareRowBad}`}>
                   <span className={styles.iconBad}>✕</span>
-                  <span>Ejecutar el comando equivocado y perder cambios del working tree</span>
+                  <span>{t('landing.compare.row3', lang)}</span>
                 </div>
                 <div className={`${styles.compareRow} ${styles.compareRowBad}`}>
                   <span className={styles.iconBad}>✕</span>
-                  <span>Volver a buscar cómo deshacer el comando incorrecto</span>
+                  <span>{t('landing.compare.row4', lang)}</span>
                 </div>
               </div>
             </div>
 
             <div className={`${styles.compareCol} ${styles.compareColAfter}`}>
               <div className={styles.compareHeader}>
-                <span className={`${styles.compareBadge} ${styles.compareBadgeAfter}`}>✓ CON PROMPT2GIT</span>
+                <span className={`${styles.compareBadge} ${styles.compareBadgeAfter}`}>{t('landing.compare.after_badge', lang)}</span>
               </div>
               <div className={styles.compareBody}>
                 <div className={`${styles.compareRow} ${styles.compareRowGood}`}>
                   <span className={styles.iconGood}>✓</span>
-                  <span>Escribes <em>&quot;deshacer último commit manteniendo los cambios&quot;</em> en español</span>
+                  <span dangerouslySetInnerHTML={{ __html: t('landing.compare.row5', lang) }} />
                 </div>
                 <div className={`${styles.compareRow} ${styles.compareRowGood}`}>
                   <span className={styles.iconGood}>✓</span>
-                  <span>Obtienes <code className={`${styles.codeInline} ${styles.codeGreen}`}>git reset --soft HEAD~1</code> con explicación clara en segundos</span>
+                  <span>{t('landing.compare.row6_pre', lang)}<code className={`${styles.codeInline} ${styles.codeGreen}`}>git reset --soft HEAD~1</code>{t('landing.compare.row6_post', lang)}</span>
                 </div>
                 <div className={`${styles.compareRow} ${styles.compareRowGood}`}>
                   <span className={styles.iconGood}>✓</span>
-                  <span>Activas Modo Educativo y entiendes exactamente qué hace cada flag antes de ejecutar</span>
+                  <span>{t('landing.compare.row7', lang)}</span>
                 </div>
                 <div className={`${styles.compareRow} ${styles.compareRowGood}`}>
                   <span className={styles.iconGood}>✓</span>
-                  <span>Copias con un clic y ejecutas con confianza. El historial guarda el comando para reutilizar.</span>
+                  <span>{t('landing.compare.row8', lang)}</span>
                 </div>
               </div>
             </div>
@@ -305,41 +307,39 @@ export default function LandingPage() {
       {/* ── Testimonials ───────────────────────── */}
       <section className={styles.section}>
         <div className={styles.container}>
-          <div className={styles.sectionLabel}>Comunidad beta</div>
-          <h2 className={styles.sectionTitle}>
-            Lo que dicen los<br /><strong>primeros usuarios</strong>
-          </h2>
+          <div className={styles.sectionLabel}>{t('landing.testimonials.label', lang)}</div>
+          <h2 className={styles.sectionTitle} dangerouslySetInnerHTML={{ __html: t('landing.testimonials.title', lang) }} />
           <div className={styles.testiGrid}>
             <div className={styles.testiCard}>
               <div className={styles.stars}>★★★★★</div>
-              <p className={styles.testiQuote}>&quot;Llevo 2 meses aprendiendo Git y siempre me trabo con los flags de reset. Prompt2Git me los explicó mejor que cualquier tutorial.&quot;</p>
+              <p className={styles.testiQuote}>&quot;{t('landing.testi.1.quote', lang)}&quot;</p>
               <div className={styles.testiAuthor}>
-                <div className={styles.testiAvatar} style={{ color: 'var(--accent)' }}>AL</div>
+                <div className={styles.testiAvatar} style={{ color: 'var(--accent)' }}>{t('landing.testi.1.initials', lang)}</div>
                 <div>
-                  <div className={styles.testiName}>Andrea López</div>
-                  <div className={styles.testiRole}>Dev Junior · Bootcamp LATAM</div>
+                  <div className={styles.testiName}>{t('landing.testi.1.name', lang)}</div>
+                  <div className={styles.testiRole}>{t('landing.testi.1.role', lang)}</div>
                 </div>
               </div>
             </div>
             <div className={styles.testiCard}>
               <div className={styles.stars}>★★★★★</div>
-              <p className={styles.testiQuote}>&quot;Finalmente puedo trabajar con ramas sin abrir Stack Overflow cada 5 minutos. El modo educativo es oro para el equipo.&quot;</p>
+              <p className={styles.testiQuote}>&quot;{t('landing.testi.2.quote', lang)}&quot;</p>
               <div className={styles.testiAuthor}>
-                <div className={styles.testiAvatar} style={{ color: 'var(--blue)' }}>BR</div>
+                <div className={styles.testiAvatar} style={{ color: 'var(--blue)' }}>{t('landing.testi.2.initials', lang)}</div>
                 <div>
-                  <div className={styles.testiName}>Benjamin Rodriguez</div>
-                  <div className={styles.testiRole}>Dev Junior · Oracle</div>
+                  <div className={styles.testiName}>{t('landing.testi.2.name', lang)}</div>
+                  <div className={styles.testiRole}>{t('landing.testi.2.role', lang)}</div>
                 </div>
               </div>
             </div>
             <div className={styles.testiCard}>
               <div className={styles.stars}>★★★★★</div>
-              <p className={styles.testiQuote}>&quot;Lo uso para onboarding de nuevos devs. Les digo que usen Prompt2Git las primeras semanas y aprenden los comandos sin fricción.&quot;</p>
+              <p className={styles.testiQuote}>&quot;{t('landing.testi.3.quote', lang)}&quot;</p>
               <div className={styles.testiAuthor}>
-                <div className={styles.testiAvatar} style={{ color: 'var(--amber)' }}>SC</div>
+                <div className={styles.testiAvatar} style={{ color: 'var(--amber)' }}>{t('landing.testi.3.initials', lang)}</div>
                 <div>
-                  <div className={styles.testiName}>Sofía Cárdenas</div>
-                  <div className={styles.testiRole}>Engineering Manager · Colombia</div>
+                  <div className={styles.testiName}>{t('landing.testi.3.name', lang)}</div>
+                  <div className={styles.testiRole}>{t('landing.testi.3.role', lang)}</div>
                 </div>
               </div>
             </div>
@@ -354,17 +354,15 @@ export default function LandingPage() {
         <div className={styles.container}>
           <div className={styles.ctaBorder}>
             <div className={styles.ctaBg} />
-            <h2 className={styles.ctaTitle}>
-              ¿Listo para olvidar<br /><strong>los flags de Git</strong>?
-            </h2>
-            <p className={styles.ctaSub}>Empezá gratis — la IA está incluida, no necesitás configurar nada. Sin espera, sin lista de espera.</p>
+            <h2 className={styles.ctaTitle} dangerouslySetInnerHTML={{ __html: t('landing.cta.title', lang) }} />
+            <p className={styles.ctaSub}>{t('landing.cta.sub', lang)}</p>
             <a href="/login" className={styles.btnPrimary} style={{ fontSize: 15, padding: '14px 36px' }}>
               <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
                 <path d="M8 2l5 5-5 5M3 7h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              Empieza ahora — es gratis
+              {t('landing.cta.btn', lang)}
             </a>
-            <p className={styles.ctaNote} style={{ marginTop: 16 }}>Sin registro complicado · Magic Link o GitHub · 20 comandos gratis al mes · IA incluida</p>
+            <p className={styles.ctaNote} style={{ marginTop: 16 }}>{t('landing.cta.note', lang)}</p>
           </div>
         </div>
       </section>
@@ -397,9 +395,9 @@ export default function LandingPage() {
               <div className={styles.footerDivider} />
               <ul className={styles.footerLinks}>
                 <li><a href="mailto:contact@zivelo.dev">contact@zivelo.dev</a></li>
-                <li><Link href="/privacidad">Privacidad</Link></li>
-                <li><Link href="/terminos">Términos</Link></li>
-                <li><Link href="/app">App →</Link></li>
+                <li><Link href="/privacidad">{t('landing.footer.privacidad', lang)}</Link></li>
+                <li><Link href="/terminos">{t('landing.footer.terminos', lang)}</Link></li>
+                <li><Link href="/app">{t('landing.footer.app', lang)}</Link></li>
               </ul>
             </div>
           </div>
