@@ -105,11 +105,22 @@ export async function POST(request: Request) {
 
     const configs: ProviderConfig[] = [primaryConfig]
     const openrouterKey = process.env.OPENROUTER_API_KEY
-    if (openrouterKey && providerConfig.provider !== 'openrouter') {
+    const zenKey = process.env.ZEN_API_KEY
+
+    // Fallback bidireccional
+    if (providerConfig.provider !== 'openrouter' && openrouterKey) {
       configs.push({
         provider: 'openrouter',
         apiKey: openrouterKey,
-        model: 'meta-llama/llama-3.1-8b-instruct:free',
+        model: 'meta-llama/llama-3.3-70b-instruct:free',
+        lang: lang ?? 'es',
+      })
+    }
+    if (providerConfig.provider !== 'zen' && zenKey) {
+      configs.push({
+        provider: 'zen',
+        apiKey: zenKey,
+        model: 'minimax-m2.5-free',
         lang: lang ?? 'es',
       })
     }

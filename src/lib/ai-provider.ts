@@ -17,8 +17,8 @@ const MODELS: Record<Provider, string> = {
   gemini:      'gemini-1.5-flash',
   groq:        'llama-3.1-8b-instant',
   mistral:     'mistral-small-latest',
-  openrouter:  'meta-llama/llama-3.1-8b-instruct:free',
-  zen:         'big-pickle',
+  openrouter:  'meta-llama/llama-3.3-70b-instruct:free',
+  zen:         'minimax-m2.5-free',
 }
 
 const OPENAI_COMPAT_ENDPOINTS: Partial<Record<Provider, string>> = {
@@ -122,8 +122,10 @@ async function callOpenAICompat(config: ProviderConfig, prompt: string): Promise
     const err = await res.json().catch(() => ({})) as { error?: { message?: string } }
     throw new Error(err.error?.message ?? `${config.provider} error ${res.status}`)
   }
-  const data = await res.json() as { choices: Array<{ message: { content: string } }> }
-  return data.choices[0]?.message.content ?? ''
+  const data = await res.json() as { choices: Array<{ message: { content?: string; reasoning_content?: string } }> }
+  const message = data.choices[0]?.message
+  // Algunos modelos (DeepSeek, etc.) devuelven la respuesta en reasoning_content en vez de content
+  return message?.content || message?.reasoning_content || ''
 }
 
 async function callGemini(config: ProviderConfig, prompt: string): Promise<string> {

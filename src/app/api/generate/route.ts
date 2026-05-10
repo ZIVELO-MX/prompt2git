@@ -198,12 +198,23 @@ export async function POST(request: Request) {
 
     const configs: ProviderConfig[] = [primaryConfig]
     const openrouterKey = process.env.OPENROUTER_API_KEY
-    // Fallback a openrouter free si el primario no es openrouter
-    if (openrouterKey && providerConfig.provider !== 'openrouter') {
+    const zenKey = process.env.ZEN_API_KEY
+
+    // Fallback bidireccional: si el primario falla, intentar el otro proveedor free disponible
+    if (providerConfig.provider !== 'openrouter' && openrouterKey) {
       configs.push({
         provider: 'openrouter',
         apiKey: openrouterKey,
-        model: 'meta-llama/llama-3.1-8b-instruct:free',
+        model: 'meta-llama/llama-3.3-70b-instruct:free',
+        lang: lang ?? 'es',
+        repoContext,
+      })
+    }
+    if (providerConfig.provider !== 'zen' && zenKey) {
+      configs.push({
+        provider: 'zen',
+        apiKey: zenKey,
+        model: 'minimax-m2.5-free',
         lang: lang ?? 'es',
         repoContext,
       })
@@ -219,8 +230,8 @@ export async function POST(request: Request) {
       user_id: user.id,
       input: input.trim(),
       command: result.command,
-      explanation: JSON.stringify(result.explanation),
-      flags: JSON.stringify(result.flags),
+      explanation: result.explanation,
+      flags: result.flags,
       provider: result.provider,
       model: result.model,
       created_at: now,
@@ -232,7 +243,7 @@ export async function POST(request: Request) {
       .insert(commandToInsert)
 
     if (insertError) {
-      console.error('Error al guardar comando en historial:', insertError.message)
+      console.error('Error al guardar comando en historial:', insertError.message, insertError.code, insertError.details)
     }
 
     return NextResponse.json({
