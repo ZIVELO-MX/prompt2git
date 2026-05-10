@@ -1,7 +1,6 @@
 /* ── Root ───────────────────────────────────── */
 .root {
   min-height: 100%;
-  overflow-x: hidden;
   position: relative;
 }
 
@@ -489,4 +488,8 @@
 @media (max-width: 600px) {
   .navLinks { display: none; }
   .container { padding: 0 18px; }
+  .nav {
+    background: var(--bg-base);
+    backdrop-filter: none;
+  }
 }
