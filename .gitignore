@@ -46,6 +46,9 @@ next-env.d.ts
 *.log
 .ai-workspace
 
+# VS Code extension (local only — not part of web deployment)
+packages/vscode-extension/
+
 # AI workspace y archivos locales
 ai-workspace/
 node-compile-cache/
