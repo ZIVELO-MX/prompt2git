@@ -19,13 +19,13 @@ function buildCallbackUrl(redirectUri: string | null): string {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={null}>
-      <LoginForm />
+    <Suspense>
+      <LoginContent />
     </Suspense>
   )
 }
 
-function LoginForm() {
+function LoginContent() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)

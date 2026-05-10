@@ -84,7 +84,8 @@ export function Onboarding() {
 
   if (!visible) return null
 
-  const current = STEPS[step]!
+  const current = STEPS[step]
+  if (!current) return null
   const isLast = step === STEPS.length - 1
 
   return (

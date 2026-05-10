@@ -1,7 +1,6 @@
 /* ── Root ───────────────────────────────────── */
 .root {
   min-height: 100%;
-  overflow-x: hidden;
   position: relative;
 }
 
@@ -563,6 +562,10 @@
   .navActions { gap: 4px; }
   .hamburger { display: inline-flex; align-items: center; justify-content: center; }
   .container { padding: 0 18px; }
+  .nav {
+    background: var(--bg-base);
+    backdrop-filter: none;
+  }
 }
 
 /* Anchor targets offset for fixed nav */
