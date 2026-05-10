@@ -1,4 +1,6 @@
 import type { Provider, Plan, GenerateResult, FixResult } from '@/types'
+import { FREE_MODELS, STARTER_MODEL_KEY } from '@/lib/models'
+export { FREE_MODELS } from '@/lib/models'
 import { logAIRequest } from '@/lib/ai-logger'
 
 export interface ProviderConfig {
@@ -29,16 +31,7 @@ const OPENAI_COMPAT_ENDPOINTS: Partial<Record<Provider, string>> = {
 
 export const DEFAULT_MODELS = MODELS
 
-export const FREE_MODELS: Record<string, { provider: Provider; modelId: string; label: string }> = {
-  'llama-3.1-8b':   { provider: 'openrouter', modelId: 'meta-llama/llama-3.1-8b-instruct:free', label: 'Llama 3.1 8B' },
-  'big-pickle':     { provider: 'zen',         modelId: 'big-pickle',             label: 'Big Pickle' },
-  'minimax-m2.5':   { provider: 'zen',         modelId: 'minimax-m2.5-free',      label: 'MiniMax M2.5 Free' },
-  'ling-2.6-flash': { provider: 'zen',         modelId: 'ling-2.6-flash-free',    label: 'Ling 2.6 Flash Free' },
-  'hy3-preview':    { provider: 'zen',         modelId: 'hy3-preview-free',       label: 'Hy3 Preview Free' },
-  'nemotron-3':     { provider: 'zen',         modelId: 'nemotron-3-super-free',  label: 'Nemotron 3 Super Free' },
-}
-
-const STARTER_DEFAULT = FREE_MODELS['llama-3.1-8b']!
+const STARTER_DEFAULT = FREE_MODELS[STARTER_MODEL_KEY]!
 
 export function selectModel(plan: Plan, preferredModelKey?: string | null): { provider: Provider; model: string } {
   if (plan === 'pro' && preferredModelKey && FREE_MODELS[preferredModelKey]) {

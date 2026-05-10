@@ -10,7 +10,7 @@ function normalize(input: string): string {
   return input.toLowerCase().replace(/\s+/g, ' ').trim()
 }
 
-async function getProviderConfig(userId: string): Promise<{
+async function getProviderConfig(userId: string, selectedModelOverride?: string): Promise<{
   plan: Plan
   provider: string
   apiKey: string
@@ -48,14 +48,17 @@ async function getProviderConfig(userId: string): Promise<{
   }
 
   // Platform key path — read model preference from user_preferences
-  const { data: prefs } = await supabase
-    .from('user_preferences')
-    .select('selected_model')
-    .eq('user_id', userId)
-    .maybeSingle()
+  const modelKey = selectedModelOverride ?? (
+    (await supabase
+      .from('user_preferences')
+      .select('selected_model')
+      .eq('user_id', userId)
+      .maybeSingle()
+    ).data?.selected_model ?? null
+  )
 
   const plan: Plan = 'starter' // default until Stripe sets the real plan
-  const { provider, model } = selectModel(plan, prefs?.selected_model)
+  const { provider, model } = selectModel(plan, modelKey)
   const apiKey = provider === 'zen'
     ? process.env.ZEN_API_KEY
     : process.env.OPENROUTER_API_KEY
@@ -98,9 +101,10 @@ export async function POST(request: Request) {
   const body = await request.json() as {
     input: string
     lang?: 'es' | 'en'
+    selectedModel?: string
     repoContext?: { branch: string; last_commit: string }
   }
-  const { input, lang, repoContext } = body
+  const { input, lang, selectedModel: bodySelectedModel, repoContext } = body
   if (!input?.trim()) {
     return NextResponse.json({ error: 'input es requerido' }, { status: 400 })
   }
@@ -110,7 +114,7 @@ export async function POST(request: Request) {
 
   let providerConfig: Awaited<ReturnType<typeof getProviderConfig>>
   try {
-    providerConfig = await getProviderConfig(user.id)
+    providerConfig = await getProviderConfig(user.id, bodySelectedModel)
   } catch {
     return NextResponse.json(
       { error: 'No hay proveedor configurado y el plan free no está disponible.' },

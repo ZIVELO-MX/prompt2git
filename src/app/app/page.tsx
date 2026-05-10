@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { Command, Provider, FixResult } from '@/types'
+import { FREE_MODELS, STARTER_MODEL_KEY } from '@/lib/models'
 import { Sidebar } from '@/components/sidebar'
 import { ResultCard } from '@/components/result-card'
 import { QuickActions } from '@/components/quick-actions'
@@ -89,6 +90,7 @@ export default function AppPage() {
 
   const [favorites, setFavorites]     = useState<Command[]>([])
   const [monthlyUsage, setMonthlyUsage] = useState<{ used: number; limit: number; plan: string } | null>(null)
+  const [selectedModel, setSelectedModel] = useState<string>(STARTER_MODEL_KEY)
 
   const [fixMode, setFixMode]         = useState(false)
   const [gitStatus, setGitStatus]     = useState('')
@@ -149,6 +151,10 @@ export default function AppPage() {
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d?.limit) setMonthlyUsage(d) })
       .catch(() => {})
+    fetch('/api/preferences')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.selected_model) setSelectedModel(d.selected_model as string) })
+      .catch(() => {})
   }, [])
 
   const fetchHistory = async () => {
@@ -169,6 +175,15 @@ export default function AppPage() {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleGenerate()
+  }
+
+  const handleModelChange = async (key: string) => {
+    setSelectedModel(key)
+    await fetch('/api/preferences', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ selected_model: key }),
+    }).catch(() => {})
   }
 
   const handleSelect = useCallback((item: Command) => {
@@ -208,6 +223,7 @@ export default function AppPage() {
         body: JSON.stringify({
           input: trimmed,
           lang,
+          selectedModel,
           repoContext: (() => { try { const r = localStorage.getItem('p2g_active_repo'); return r ? JSON.parse(r) : null } catch { return null } })(),
         }),
       })
@@ -494,6 +510,19 @@ export default function AppPage() {
                   <span className={`${styles.charCount} ${charCount > 240 ? styles.warning : ''}`}>
                     {charCount}/280
                   </span>
+                  {monthlyUsage?.plan === 'pro' && (
+                    <select
+                      className={styles.modelSelect}
+                      value={selectedModel}
+                      onChange={e => handleModelChange(e.target.value)}
+                      disabled={loading}
+                      title="Modelo de IA"
+                    >
+                      {Object.entries(FREE_MODELS).map(([key, m]) => (
+                        <option key={key} value={key}>{m.label}</option>
+                      ))}
+                    </select>
+                  )}
                   <button
                     type="button"
                     className={styles.generateBtn}
