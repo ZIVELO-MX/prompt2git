@@ -1,4 +1,6 @@
-import type { Provider, GenerateResult, FixResult } from '@/types'
+import type { Provider, Plan, GenerateResult, FixResult } from '@/types'
+import { FREE_MODELS, STARTER_MODEL_KEY } from '@/lib/models'
+export { FREE_MODELS } from '@/lib/models'
 import { logAIRequest } from '@/lib/ai-logger'
 
 export interface ProviderConfig {
@@ -16,6 +18,7 @@ const MODELS: Record<Provider, string> = {
   groq:        'llama-3.1-8b-instant',
   mistral:     'mistral-small-latest',
   openrouter:  'meta-llama/llama-3.1-8b-instruct:free',
+  zen:         'big-pickle',
 }
 
 const OPENAI_COMPAT_ENDPOINTS: Partial<Record<Provider, string>> = {
@@ -23,9 +26,20 @@ const OPENAI_COMPAT_ENDPOINTS: Partial<Record<Provider, string>> = {
   groq:       'https://api.groq.com/openai/v1/chat/completions',
   mistral:    'https://api.mistral.ai/v1/chat/completions',
   openrouter: 'https://openrouter.ai/api/v1/chat/completions',
+  zen:        'https://opencode.ai/zen/v1/chat/completions',
 }
 
 export const DEFAULT_MODELS = MODELS
+
+const STARTER_DEFAULT = FREE_MODELS[STARTER_MODEL_KEY]!
+
+export function selectModel(plan: Plan, preferredModelKey?: string | null): { provider: Provider; model: string } {
+  if (plan === 'pro' && preferredModelKey && FREE_MODELS[preferredModelKey]) {
+    const m = FREE_MODELS[preferredModelKey]!
+    return { provider: m.provider, model: m.modelId }
+  }
+  return { provider: STARTER_DEFAULT.provider, model: STARTER_DEFAULT.modelId }
+}
 
 function buildPrompt(input: string, lang: 'es' | 'en' = 'es', repoContext?: { branch: string; last_commit: string }): string {
   const isEn = lang === 'en'
@@ -91,7 +105,7 @@ async function callOpenAICompat(config: ProviderConfig, prompt: string): Promise
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${config.apiKey}`,
   }
-  if (config.provider === 'openrouter') {
+  if (config.provider === 'openrouter' || config.provider === 'zen') {
     headers['HTTP-Referer'] = 'https://prompt2git.app'
     headers['X-Title'] = 'Prompt2Git'
   }
@@ -153,7 +167,8 @@ export async function generate(config: ProviderConfig, input: string): Promise<G
     case 'openai':
     case 'groq':
     case 'mistral':
-    case 'openrouter': raw = await callOpenAICompat(config, prompt); break
+    case 'openrouter':
+    case 'zen':        raw = await callOpenAICompat(config, prompt); break
     case 'gemini':     raw = await callGemini(config, prompt);       break
     default: throw new Error(`Proveedor no soportado: ${config.provider}`)
   }
@@ -220,7 +235,8 @@ export async function generateFix(config: ProviderConfig, gitStatus: string, pro
     case 'openai':
     case 'groq':
     case 'mistral':
-    case 'openrouter': raw = await callOpenAICompat(config, prompt); break
+    case 'openrouter':
+    case 'zen':        raw = await callOpenAICompat(config, prompt); break
     case 'gemini':     raw = await callGemini(config, prompt);       break
     default: throw new Error(`Proveedor no soportado: ${config.provider}`)
   }

@@ -4,7 +4,8 @@ import type { GenerateRequest, GenerateResponse, FixRequest, FixResponse, ApiErr
 
 function getApiUrl(): string {
   const config = vscode.workspace.getConfiguration('gitspeak')
-  return config.get<string>('apiUrl') ?? 'https://www.prompt2git.com'
+  const url = config.get<string>('apiUrl') ?? 'https://www.prompt2git.com'
+  return url.replace(/\/+$/, '')
 }
 
 async function request<T>(

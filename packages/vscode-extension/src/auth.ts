@@ -77,7 +77,7 @@ export async function login(): Promise<string> {
   })
 }
 
-export function handleAuthCallback(uri: vscode.Uri): void {
+export async function handleAuthCallback(uri: vscode.Uri): Promise<void> {
   const params = new URLSearchParams(uri.query)
   const fragmentParams = new URLSearchParams(
     uri.fragment.startsWith('#') ? uri.fragment.slice(1) : uri.fragment,
@@ -86,7 +86,7 @@ export function handleAuthCallback(uri: vscode.Uri): void {
   const token = params.get('token') ?? params.get('access_token') ?? fragmentParams.get('access_token') ?? fragmentParams.get('token')
 
   if (token) {
-    storeToken(token)
+    await storeToken(token)
     vscode.window.showInformationMessage('GitSpeak: sesión iniciada correctamente.')
     _pendingResolve?.(token)
   } else {
