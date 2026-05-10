@@ -4,7 +4,7 @@ import { openPanel } from './panel'
 
 class AuthUriHandler implements vscode.UriHandler {
   handleUri(uri: vscode.Uri): vscode.ProviderResult<void> {
-    handleAuthCallback(uri)
+    return handleAuthCallback(uri)
   }
 }
 

@@ -24,6 +24,12 @@ export async function GET() {
 
   const used = count ?? 0
 
+  const { data: prefs } = await supabase
+    .from('user_preferences')
+    .select('role')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
   const { data: providerConfig } = await supabase
     .from('provider_keys')
     .select('id')
@@ -31,11 +37,11 @@ export async function GET() {
     .limit(1)
     .maybeSingle()
 
-  const plan = providerConfig ? 'pro' : 'starter'
+  const plan = prefs?.role === 'admin' ? 'pro' : (providerConfig ? 'pro' : 'starter')
 
   return NextResponse.json({
     used,
-    limit: STARTER_LIMIT,
+    limit: plan === 'pro' ? 999_999 : STARTER_LIMIT,
     plan,
   })
 }

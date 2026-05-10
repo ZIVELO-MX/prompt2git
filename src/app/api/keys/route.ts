@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
 
-const VALID_PROVIDERS = ['anthropic', 'openai', 'gemini', 'groq', 'mistral', 'openrouter']
+const VALID_PROVIDERS = ['anthropic', 'openai', 'gemini', 'groq', 'mistral', 'openrouter', 'zen']
 
 // GET /api/keys — qué proveedores tiene configurados el usuario (sin exponer las keys)
 export async function GET() {

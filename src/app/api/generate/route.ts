@@ -47,24 +47,23 @@ async function getProviderConfig(userId: string, selectedModelOverride?: string)
     }
   }
 
-  // Platform key path — read model preference from user_preferences
-  const modelKey = selectedModelOverride ?? (
-    (await supabase
-      .from('user_preferences')
-      .select('selected_model')
-      .eq('user_id', userId)
-      .maybeSingle()
-    ).data?.selected_model ?? null
-  )
+  // Platform key path — read preferences + admin role
+  const { data: prefs } = await supabase
+    .from('user_preferences')
+    .select('selected_model, role')
+    .eq('user_id', userId)
+    .maybeSingle()
 
-  const plan: Plan = 'starter' // default until Stripe sets the real plan
+  const isAdmin = prefs?.role === 'admin'
+  const modelKey = selectedModelOverride ?? prefs?.selected_model ?? null
+  const plan: Plan = isAdmin ? 'pro' : 'starter'
   const { provider, model } = selectModel(plan, modelKey)
   const apiKey = provider === 'zen'
     ? process.env.ZEN_API_KEY
     : process.env.OPENROUTER_API_KEY
   if (!apiKey) throw new Error('free_tier_unavailable')
 
-  return { plan, provider, apiKey, model, dailyLimit: FREE_LIMIT }
+  return { plan, provider, apiKey, model, dailyLimit: isAdmin ? PRO_LIMIT : FREE_LIMIT }
 }
 
 async function getEmbeddingKey(userId: string): Promise<string | undefined> {

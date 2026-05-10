@@ -6,6 +6,7 @@ type PrefBody = {
   show_sidebar?: boolean
   edu_mode?: boolean
   provider?: string | null
+  selected_model?: string | null
 }
 
 export async function GET() {
@@ -25,7 +26,10 @@ export async function GET() {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   if (!data) {
-    return NextResponse.json({ lang: 'es', show_sidebar: true, edu_mode: false, provider: null })
+    return NextResponse.json({
+      lang: 'es', show_sidebar: true, edu_mode: false,
+      provider: null, selected_model: null,
+    })
   }
 
   return NextResponse.json({
@@ -33,6 +37,7 @@ export async function GET() {
     show_sidebar: data.show_sidebar,
     edu_mode: data.edu_mode,
     provider: data.provider,
+    selected_model: data.selected_model ?? null,
   })
 }
 
@@ -51,6 +56,7 @@ export async function PATCH(request: Request) {
   if (body.show_sidebar !== undefined) updates.show_sidebar = body.show_sidebar
   if (body.edu_mode !== undefined) updates.edu_mode = body.edu_mode
   if (body.provider !== undefined) updates.provider = body.provider
+  if (body.selected_model !== undefined) updates.selected_model = body.selected_model
   updates.updated_at = new Date().toISOString()
 
   const { data: existing } = await supabase

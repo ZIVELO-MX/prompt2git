@@ -44,18 +44,19 @@ async function getProviderConfig(userId: string): Promise<{
 
   const { data: prefs } = await supabase
     .from('user_preferences')
-    .select('selected_model')
+    .select('selected_model, role')
     .eq('user_id', userId)
     .maybeSingle()
 
-  const plan: Plan = 'starter'
-  const { provider, model } = selectModel(plan, prefs?.selected_model)
+  const isAdmin = prefs?.role === 'admin'
+  const plan: Plan = isAdmin ? 'pro' : 'starter'
+  const { provider, model } = selectModel(plan, prefs?.selected_model ?? null)
   const apiKey = provider === 'zen'
     ? process.env.ZEN_API_KEY
     : process.env.OPENROUTER_API_KEY
   if (!apiKey) throw new Error('free_tier_unavailable')
 
-  return { plan, provider, apiKey, model, dailyLimit: FREE_LIMIT }
+  return { plan, provider, apiKey, model, dailyLimit: isAdmin ? PRO_LIMIT : FREE_LIMIT }
 }
 
 export async function POST(request: Request) {
