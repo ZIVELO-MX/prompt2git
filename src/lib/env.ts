@@ -36,6 +36,12 @@ const ENV_VARS: EnvVar[] = [
     serverOnly: true,
     description: 'Key de OpenRouter para el plan free (solo servidor)',
   },
+  {
+    key: 'ZEN_API_KEY',
+    required: false,
+    serverOnly: true,
+    description: 'Key de OpenCode Zen para modelos free (solo servidor)',
+  },
 ]
 
 export function validateEnv(): void {
