@@ -165,6 +165,10 @@
 .codeAmber { font-family: var(--font-mono); color: var(--amber); font-size: 0.9em; }
 .codeBlue  { font-family: var(--font-mono); color: var(--blue); font-size: 0.9em; }
 
+@media (prefers-reduced-motion: reduce) {
+  .card { animation: none; }
+}
+
 @media (max-width: 900px) {
   .grid { grid-template-columns: 1fr; }
   .visual { display: none; }

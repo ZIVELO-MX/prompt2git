@@ -9,7 +9,6 @@ import { QuickActions } from '@/components/quick-actions'
 import Link from 'next/link'
 import { GitIcon, MortarboardIcon, SettingsIcon, SunIcon, MoonIcon } from '@/components/ui/icons'
 import { Onboarding } from '@/components/onboarding'
-import { PricingModal } from '@/components/pricing-modal'
 import { ContextStrip } from '@/components/context-strip'
 import { FixResultCard } from '@/components/fix-result-card'
 import { t, getStoredLang, setStoredLang } from '@/lib/i18n'
@@ -82,7 +81,6 @@ export default function AppPage() {
   const [placeholderIdx, setPlaceholderIdx] = useState(0)
   const [tweaks, setTweaks]           = useState<TweaksState>({ showSidebar: true, eduMode: false })
   const [showTweaks, setShowTweaks]   = useState(false)
-  const [showPricing, setShowPricing] = useState(false)
   const [theme, setTheme]             = useState<'dark' | 'light'>('dark')
   const [queriesLeft, setQueriesLeft] = useState<number | null>(null)
   const [rateLimitReset, setRateLimitReset] = useState<string | null>(null)
@@ -354,20 +352,12 @@ export default function AppPage() {
               <button
                 type="button"
                 className={`${styles.usageBadge} ${monthlyUsage.used >= monthlyUsage.limit - 4 ? styles.usageCritical : ''}`}
-                onClick={() => monthlyUsage.used >= monthlyUsage.limit ? setShowPricing(true) : undefined}
+                onClick={undefined}
                 title={`${monthlyUsage.used}/${monthlyUsage.limit} comandos este mes`}
               >
                 {monthlyUsage.used}/{monthlyUsage.limit}
               </button>
             )}
-
-            <button
-              type="button"
-              className={styles.planesBtn}
-              onClick={() => setShowPricing(true)}
-            >
-              {t('app.plans', lang)}
-            </button>
 
             <button
               type="button"
@@ -427,13 +417,6 @@ export default function AppPage() {
                 <strong>{t('app.rate_limit.title', lang)}</strong>
                 <span>{t('app.rate_limit.resets_at', lang)}{new Date(rateLimitReset).toLocaleTimeString(lang === 'en' ? 'en' : 'es', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
-              <button
-                type="button"
-                className={styles.rateLimitUpgradeBtn}
-                onClick={() => setShowPricing(true)}
-              >
-                {t('app.rate_limit.view_plans', lang)}
-              </button>
             </div>
           )}
           {fixMode ? (
@@ -583,7 +566,6 @@ export default function AppPage() {
         </div>
       </main>
 
-      <PricingModal open={showPricing} onClose={() => setShowPricing(false)} />
     </div>
   )
 }

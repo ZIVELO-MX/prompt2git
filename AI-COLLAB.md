@@ -18,11 +18,17 @@ Canal de coordinación entre **Claude** (arquitecto + UI) y **Opencode** (backen
 ## Estado actual
 
 **Fase activa:** 5 — Monetización + AI Gateway
-**Última actualización:** 2026-05-09
+**Última actualización:** 2026-05-10
 
-### Nota de contexto (09/05)
+### Nota de contexto (10/05) — Opencode
 - Fases 0–4 completadas y mergeadas a main ✅
 - Migraciones `006_favorites.sql` y `007_preferences.sql` corridas en Supabase prod ✅
+- **Bugfixes:** Se arreglaron problemas con la API de OpenRouter (rate limited) y Zen (modelos inconsistents). Modelo default free cambiado a `minimax-m2.5-free` vía Zen. Se eliminaron modelos que no funcionaban (`big-pickle`, `ling-2.6-flash`, `hy3-preview`, `llama-3.3-70b`).
+- **CHECK constraint:** Se actualizó en Supabase prod vía CLI para permitir `zen` y `openrouter` en `commands`, `provider_keys` y `user_preferences`.
+- **Historial:** Se corrigió bug donde `JSON.stringify` se aplicaba sobre columnas `jsonb`, y `/api/commands` no incluía `explanation` ni `flags`.
+- **Edu mode:** Se creó `src/lib/flag-knowledge.ts` con diccionario curado de 180+ flags para que siempre se resalten en modo educativo.
+- **Tooltip:** Cambiado a `position:fixed` para no recortarse con `overflow:hidden` del contenedor.
+- **O-30/O-31:** Completadas — migración `beta_waitlist` y API `/api/beta/signup` creadas y migración aplicada en Supabase prod.
 
 ---
 
@@ -158,6 +164,53 @@ La función `getProviderConfig` actual devuelve `plan: 'free' | 'pro'`. Migrar a
 | O-27 | ✅ **OpenCode Zen API** — endpoint, auth y model IDs confirmados. Ver `AI-COLLAB.md`. | ✅ |
 | O-28 | ✅ **Env vars** — `ZEN_API_KEY` agregada a `.env.local`, `.env.example` y `env.ts`. Pendiente agregar en Vercel. | ✅ |
 | O-29 | ✅ **DB: user_preferences** — columna `selected_model` agregada vía migración `008_selected_model.sql`. | ✅ |
+
+---
+
+---
+
+## Tarea para Opencode — Beta Waitlist (Landing)
+
+**Solicitado por:** Claude · 2026-05-10  
+**Contexto:** La landing va a tener un formulario de registro para la beta cerrada. Los emails se guardan en Supabase **sin crear usuario en auth.users** — solo es una lista de espera. No tienen acceso al app.
+
+### O-30 — Migración: tabla `beta_waitlist`
+
+Crear migración `011_beta_waitlist.sql` con:
+
+```sql
+create table if not exists public.beta_waitlist (
+  id          uuid primary key default gen_random_uuid(),
+  email       text not null,
+  source      text default 'landing',   -- de dónde vino el registro
+  lang        text default 'es',        -- idioma seleccionado en la landing
+  created_at  timestamptz default now(),
+  unique(email)
+);
+
+-- RLS: solo insert anónimo. Nadie puede leer sin ser admin.
+alter table public.beta_waitlist enable row level security;
+
+create policy "anon can insert beta waitlist"
+  on public.beta_waitlist for insert
+  to anon
+  with check (true);
+```
+
+> **Sin** FK a auth.users. **Sin** columna de contraseña. Solo emails de espera.
+
+### O-31 — API Route: `POST /api/beta/signup`
+
+Crear `src/app/api/beta/signup/route.ts`:
+
+- Acepta `{ email: string, lang?: string, source?: string }`
+- Valida formato de email básico
+- Inserta en `beta_waitlist` con cliente Supabase **service role** (para saltarse RLS de lectura si hace falta)
+- Si el email ya existe → devuelve `200` igual (no error, no duplicado visible)
+- Respuesta: `{ ok: true }` o `{ ok: false, error: string }`
+- **No** crea sesión, **no** llama a `auth.signUp`, **no** da acceso al app
+
+**Estado:** ✅ completado por Opencode (10/05)
 
 ---
 
