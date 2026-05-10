@@ -59,7 +59,7 @@ export async function POST(request: Request) {
       command_id: body.command_id ?? null,
       input: body.input.trim(),
       command: body.command.trim(),
-      explanation: JSON.stringify(body.explanation ?? []),
+      explanation: body.explanation ?? [],
       provider: body.provider,
       model: body.model,
     })

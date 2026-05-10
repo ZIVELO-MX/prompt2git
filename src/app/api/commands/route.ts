@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('commands')
-    .select('id, input, command, created_at', { count: 'exact' })
+    .select('*', { count: 'exact' })
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(limit)
