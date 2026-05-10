@@ -10,7 +10,14 @@
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 9999;
+  z-index: 200;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.02) 2px,
+    rgba(0,0,0,0.02) 3px
+  );
   background: repeating-linear-gradient(
     0deg,
     transparent,
@@ -50,6 +57,7 @@
   top: 0; left: 0; right: 0;
   z-index: 100;
   height: 60px;
+  background: rgba(3,6,9,0.85);
   background: oklch(0.12 0.01 240 / 0.85);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-subtle);
@@ -94,7 +102,7 @@
 
 .navCta {
   background: var(--accent);
-  color: oklch(0.11 0.01 240);
+  color: var(--accent-fg);
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 600;
@@ -109,6 +117,25 @@
   align-items: center;
 }
 .navCta:hover { transform: translateY(-1px); box-shadow: 0 0 24px var(--accent-glow); }
+.langSwitch {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.03em;
+}
+.langSwitch:hover { border-color: var(--text-muted); color: var(--text-primary); }
+.compareBody code {
+  font-family: var(--font-mono); font-size: 12px;
+  background: var(--bg-elevated); border: 1px solid var(--border);
+  padding: 1px 6px; border-radius: 4px; color: var(--amber);
+}
 
 /* ── Hero ───────────────────────────────────── */
 .hero {
@@ -119,6 +146,8 @@
 .heroGlow {
   position: absolute; top: -20%; left: 50%; transform: translateX(-50%);
   width: 800px; height: 600px; border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(69,206,58,0.07) 0%, transparent 70%);
+
   background: radial-gradient(ellipse, oklch(0.75 0.22 142 / 0.07) 0%, transparent 70%);
   pointer-events: none;
 }
@@ -138,6 +167,7 @@
 .heroBadge {
   display: inline-flex; align-items: center; gap: 7px;
   background: var(--accent-dim);
+  border: 1px solid rgba(69,206,58,0.35);
   border: 1px solid oklch(0.75 0.22 142 / 0.35);
   border-radius: 20px; padding: 5px 14px;
   font-size: 12px; color: var(--accent); font-weight: 500;
@@ -176,7 +206,7 @@
 }
 .btnPrimary {
   background: var(--accent);
-  color: oklch(0.11 0.01 240);
+  color: var(--accent-fg);
   font-family: var(--font-sans);
   font-size: 14px; font-weight: 600;
   padding: 12px 28px; border-radius: 8px; border: none;
@@ -210,6 +240,7 @@
   border-radius: 12px;
   overflow: hidden;
   position: relative;
+  box-shadow: 0 0 0 1px var(--border-subtle), 0 32px 80px rgba(0,0,0,0.5);
   box-shadow: 0 0 0 1px var(--border-subtle), 0 32px 80px oklch(0 0 0 / 0.5);
 }
 .terminalBar {
@@ -238,6 +269,7 @@
 .tLabel {
   display: inline-block;
   background: var(--accent-dim);
+  border: 1px solid rgba(69,206,58,0.3);
   border: 1px solid oklch(0.75 0.22 142 / 0.3);
   border-radius: 4px;
   padding: 1px 7px;
@@ -247,6 +279,7 @@
 .tLabelAmber {
   display: inline-block;
   background: var(--amber-dim);
+  border: 1px solid rgba(252,160,0,0.3);
   border: 1px solid oklch(0.78 0.18 72 / 0.3);
   border-radius: 4px;
   padding: 1px 7px;
@@ -262,6 +295,8 @@
 .terminalScan {
   position: absolute; left: 0; right: 0; height: 40px;
   pointer-events: none;
+  background: linear-gradient(transparent, rgba(69,206,58,0.04), transparent);
+
   background: linear-gradient(transparent, oklch(0.75 0.22 142 / 0.04), transparent);
   animation: scan 4s linear infinite;
 }
@@ -347,6 +382,7 @@
   padding: 2px 7px; border-radius: 4px;
   background: var(--amber-dim);
   color: var(--amber);
+  border: 1px solid rgba(252,160,0,0.3);
   border: 1px solid oklch(0.78 0.18 72 / 0.3);
   white-space: nowrap;
 }
@@ -355,6 +391,7 @@
   margin-top: 16px;
   font-family: var(--font-mono); font-size: 12px; color: var(--accent);
   background: var(--accent-dim);
+  border: 1px solid rgba(69,206,58,0.25);
   border: 1px solid oklch(0.75 0.22 142 / 0.25);
   border-radius: 5px; padding: 6px 10px; display: inline-block;
 }
@@ -370,6 +407,7 @@
 }
 .compareColAfter {
   border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-dim), 0 16px 48px rgba(69,206,58,0.1);
   box-shadow: 0 0 0 1px var(--accent-dim), 0 16px 48px oklch(0.75 0.22 142 / 0.1);
 }
 .compareHeader {
@@ -379,6 +417,7 @@
 }
 .compareColAfter .compareHeader {
   background: var(--accent-dim);
+  border-color: rgba(69,206,58,0.25);
   border-color: oklch(0.75 0.22 142 / 0.25);
 }
 .compareBadge {
@@ -391,6 +430,7 @@
 }
 .compareBadgeAfter {
   background: var(--accent-dim); color: var(--accent);
+  border: 1px solid rgba(69,206,58,0.35);
   border: 1px solid oklch(0.75 0.22 142 / 0.35);
 }
 .compareBody { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
@@ -435,6 +475,8 @@
 .ctaSection { padding: 120px 0; position: relative; overflow: hidden; }
 .ctaBg {
   position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 60% 80% at 50% 50%, rgba(69,206,58,0.06) 0%, transparent 70%);
+
   background: radial-gradient(ellipse 60% 80% at 50% 50%, oklch(0.75 0.22 142 / 0.06) 0%, transparent 70%);
 }
 .ctaBorder {
@@ -452,6 +494,36 @@
 }
 .ctaTitle strong { font-weight: 600; color: var(--accent); }
 .ctaSub { font-size: 16px; color: var(--text-secondary); margin-bottom: 40px; font-weight: 300; }
+.ctaNote { font-size: 12px; color: var(--text-muted); }
+
+/* ── Hamburger ──────────────────────────────── */
+.hamburger {
+  display: none;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: color 0.15s;
+}
+.hamburger:hover { color: var(--text-primary); }
+
+.mobileMenu {
+  display: none;
+  position: fixed; top: 60px; left: 0; right: 0;
+  background: var(--bg-base);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  z-index: 99;
+}
+.mobileMenu.open { display: flex; flex-direction: column; gap: 12px; }
+.mobileMenu a {
+  font-size: 14px; color: var(--text-secondary);
+  padding: 8px 0;
+  transition: color 0.15s;
+}
+.mobileMenu a:hover { color: var(--text-primary); }
 
 /* ── Footer ─────────────────────────────────── */
 .footer {
@@ -487,9 +559,27 @@
 }
 @media (max-width: 600px) {
   .navLinks { display: none; }
+  .navActions { gap: 4px; }
+  .hamburger { display: inline-flex; align-items: center; justify-content: center; }
   .container { padding: 0 18px; }
   .nav {
     background: var(--bg-base);
     backdrop-filter: none;
   }
+}
+
+/* Anchor targets offset for fixed nav */
+.section, .ctaSection {
+  scroll-margin-top: 80px;
+}
+.proof {
+  scroll-margin-top: 80px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .root::after { display: none; }
+  .terminalScan { animation: none; display: none; }
+  .badgeDot { animation: none; }
+  .heroTitle, .heroSub, .heroActions, .terminalWrap { animation: none; }
 }

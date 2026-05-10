@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { Command, Provider, FixResult } from '@/types'
+import { FREE_MODELS, STARTER_MODEL_KEY } from '@/lib/models'
 import { Sidebar } from '@/components/sidebar'
 import { ResultCard } from '@/components/result-card'
+import { QuickActions } from '@/components/quick-actions'
 import Link from 'next/link'
 import { GitIcon, MortarboardIcon, SettingsIcon, SunIcon, MoonIcon } from '@/components/ui/icons'
 import { Onboarding } from '@/components/onboarding'
-import { PricingModal } from '@/components/pricing-modal'
 import { ContextStrip } from '@/components/context-strip'
 import { FixResultCard } from '@/components/fix-result-card'
 import { t, getStoredLang, setStoredLang } from '@/lib/i18n'
@@ -80,11 +81,14 @@ export default function AppPage() {
   const [placeholderIdx, setPlaceholderIdx] = useState(0)
   const [tweaks, setTweaks]           = useState<TweaksState>({ showSidebar: true, eduMode: false })
   const [showTweaks, setShowTweaks]   = useState(false)
-  const [showPricing, setShowPricing] = useState(false)
   const [theme, setTheme]             = useState<'dark' | 'light'>('dark')
   const [queriesLeft, setQueriesLeft] = useState<number | null>(null)
   const [rateLimitReset, setRateLimitReset] = useState<string | null>(null)
   const [lang, setLang] = useState<Lang>('es')
+
+  const [favorites, setFavorites]     = useState<Command[]>([])
+  const [monthlyUsage, setMonthlyUsage] = useState<{ used: number; limit: number; plan: string } | null>(null)
+  const [selectedModel, setSelectedModel] = useState<string>(STARTER_MODEL_KEY)
 
   const [fixMode, setFixMode]         = useState(false)
   const [gitStatus, setGitStatus]     = useState('')
@@ -135,6 +139,20 @@ export default function AppPage() {
 
   useEffect(() => {
     fetchHistory()
+    // Cargar favoritos desde localStorage
+    try {
+      const stored = localStorage.getItem('p2g_favorites')
+      if (stored) setFavorites(JSON.parse(stored) as Command[])
+    } catch { /* ignore */ }
+    // Cargar uso mensual (C-25) — silencioso si no existe aún
+    fetch('/api/usage/month')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.limit) setMonthlyUsage(d) })
+      .catch(() => {})
+    fetch('/api/preferences')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.selected_model) setSelectedModel(d.selected_model as string) })
+      .catch(() => {})
   }, [])
 
   const fetchHistory = async () => {
@@ -155,6 +173,15 @@ export default function AppPage() {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleGenerate()
+  }
+
+  const handleModelChange = async (key: string) => {
+    setSelectedModel(key)
+    await fetch('/api/preferences', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ selected_model: key }),
+    }).catch(() => {})
   }
 
   const handleSelect = useCallback((item: Command) => {
@@ -191,7 +218,12 @@ export default function AppPage() {
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input: trimmed }),
+        body: JSON.stringify({
+          input: trimmed,
+          lang,
+          selectedModel,
+          repoContext: (() => { try { const r = localStorage.getItem('p2g_active_repo'); return r ? JSON.parse(r) : null } catch { return null } })(),
+        }),
       })
 
       if (!res.ok) {
@@ -257,6 +289,27 @@ export default function AppPage() {
     }
   }
 
+  const toggleFavorite = useCallback((command: Command) => {
+    setFavorites(prev => {
+      const exists = prev.some(f => f.id === command.id)
+      const next = exists ? prev.filter(f => f.id !== command.id) : [command, ...prev]
+      try { localStorage.setItem('p2g_favorites', JSON.stringify(next)) } catch { /* ignore */ }
+      // Sync con API cuando esté disponible (fire & forget)
+      if (exists) {
+        fetch(`/api/favorites?command_id=${command.id}`, { method: 'DELETE' }).catch(() => {})
+      } else {
+        fetch('/api/favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ command_id: command.id, input: command.input, command: command.command, explanation: command.explanation, provider: command.provider, model: command.model }),
+        }).catch(() => {})
+      }
+      return next
+    })
+  }, [])
+
+  const isFavorite = useCallback((id: string) => favorites.some(f => f.id === id), [favorites])
+
   const { showSidebar, eduMode } = tweaks
 
   return (
@@ -268,6 +321,9 @@ export default function AppPage() {
           activeId={activeId}
           onSelect={handleSelect}
           onClear={handleClear}
+          favorites={favorites}
+          onToggleFavorite={toggleFavorite}
+          lang={lang}
         />
       )}
 
@@ -277,7 +333,7 @@ export default function AppPage() {
             {!showSidebar && (
               <div className={styles.topBarBrand}>
                 <GitIcon />
-                <span className={styles.topBarBrandName}>GitSpeak</span>
+                <span className={styles.topBarBrandName}>Prompt2Git</span>
               </div>
             )}
             <span className={styles.topBarHint}>{t('app.title', lang)}</span>
@@ -292,13 +348,16 @@ export default function AppPage() {
               <MortarboardIcon /> {t('app.edu_mode', lang)}
             </button>
 
-            <button
-              type="button"
-              className={styles.planesBtn}
-              onClick={() => setShowPricing(true)}
-            >
-              {t('app.plans', lang)}
-            </button>
+            {monthlyUsage && monthlyUsage.plan === 'starter' && (
+              <button
+                type="button"
+                className={`${styles.usageBadge} ${monthlyUsage.used >= monthlyUsage.limit - 4 ? styles.usageCritical : ''}`}
+                onClick={undefined}
+                title={`${monthlyUsage.used}/${monthlyUsage.limit} comandos este mes`}
+              >
+                {monthlyUsage.used}/{monthlyUsage.limit}
+              </button>
+            )}
 
             <button
               type="button"
@@ -358,13 +417,6 @@ export default function AppPage() {
                 <strong>{t('app.rate_limit.title', lang)}</strong>
                 <span>{t('app.rate_limit.resets_at', lang)}{new Date(rateLimitReset).toLocaleTimeString(lang === 'en' ? 'en' : 'es', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
-              <button
-                type="button"
-                className={styles.rateLimitUpgradeBtn}
-                onClick={() => setShowPricing(true)}
-              >
-                {t('app.rate_limit.view_plans', lang)}
-              </button>
             </div>
           )}
           {fixMode ? (
@@ -441,6 +493,19 @@ export default function AppPage() {
                   <span className={`${styles.charCount} ${charCount > 240 ? styles.warning : ''}`}>
                     {charCount}/280
                   </span>
+                  {monthlyUsage?.plan === 'pro' && (
+                    <select
+                      className={styles.modelSelect}
+                      value={selectedModel}
+                      onChange={e => handleModelChange(e.target.value)}
+                      disabled={loading}
+                      title="Modelo de IA"
+                    >
+                      {Object.entries(FREE_MODELS).map(([key, m]) => (
+                        <option key={key} value={key}>{m.label}</option>
+                      ))}
+                    </select>
+                  )}
                   <button
                     type="button"
                     className={styles.generateBtn}
@@ -456,10 +521,22 @@ export default function AppPage() {
             </div>
           )}
 
+          {!fixMode && (
+            <QuickActions
+              lang={lang}
+              onSelect={text => { setInput(text); setCharCount(text.length); inputRef.current?.focus() }}
+            />
+          )}
+
           {fixMode ? (
             fixResult ? <FixResultCard result={fixResult} lang={lang} /> : null
           ) : result ? (
-            <ResultCard result={result} eduMode={eduMode} />
+            <ResultCard
+              result={result}
+              eduMode={eduMode}
+              isFavorite={isFavorite(result.id)}
+              onToggleFavorite={() => toggleFavorite(result)}
+            />
           ) : (
             <div className={styles.empty}>
               <p className={styles.emptyHint}>
@@ -489,7 +566,6 @@ export default function AppPage() {
         </div>
       </main>
 
-      <PricingModal open={showPricing} onClose={() => setShowPricing(false)} />
     </div>
   )
 }

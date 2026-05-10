@@ -1,11 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { generateFix } from '@/lib/ai-provider'
+import { generateFixWithFallback, selectModel, type ProviderConfig } from '@/lib/ai-provider'
 import { checkRateLimit, FREE_LIMIT, PRO_LIMIT } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
+import type { Plan } from '@/types'
 
 async function getProviderConfig(userId: string): Promise<{
-  plan: 'free' | 'pro'
+  plan: Plan
   provider: string
   apiKey: string
   model: string
@@ -13,7 +14,7 @@ async function getProviderConfig(userId: string): Promise<{
 }> {
   const supabase = await createClient()
 
-  const { data: providerConfig } = await supabase
+  const { data: byok } = await supabase
     .from('provider_keys')
     .select('id, provider, model, vault_id')
     .eq('user_id', userId)
@@ -21,38 +22,41 @@ async function getProviderConfig(userId: string): Promise<{
     .limit(1)
     .maybeSingle()
 
-  if (providerConfig) {
+  if (byok) {
     const admin = createAdminClient()
     const { data: secret } = await admin
       .schema('vault')
       .from('decrypted_secrets')
       .select('decrypted_secret')
-      .eq('id', providerConfig.vault_id)
+      .eq('id', byok.vault_id)
       .maybeSingle()
 
     if (secret?.decrypted_secret) {
       return {
         plan: 'pro',
-        provider: providerConfig.provider,
+        provider: byok.provider,
         apiKey: secret.decrypted_secret,
-        model: providerConfig.model,
+        model: byok.model,
         dailyLimit: PRO_LIMIT,
       }
     }
   }
 
-  const platformKey = process.env.OPENROUTER_API_KEY
-  if (!platformKey) {
-    throw new Error('free_tier_unavailable')
-  }
+  const { data: prefs } = await supabase
+    .from('user_preferences')
+    .select('selected_model, role')
+    .eq('user_id', userId)
+    .maybeSingle()
 
-  return {
-    plan: 'free',
-    provider: 'openrouter',
-    apiKey: platformKey,
-    model: 'meta-llama/llama-3.1-8b-instruct:free',
-    dailyLimit: FREE_LIMIT,
-  }
+  const isAdmin = prefs?.role === 'admin'
+  const plan: Plan = isAdmin ? 'pro' : 'starter'
+  const { provider, model } = selectModel(plan, prefs?.selected_model ?? null)
+  const apiKey = provider === 'zen'
+    ? process.env.ZEN_API_KEY
+    : process.env.OPENROUTER_API_KEY
+  if (!apiKey) throw new Error('free_tier_unavailable')
+
+  return { plan, provider, apiKey, model, dailyLimit: isAdmin ? PRO_LIMIT : FREE_LIMIT }
 }
 
 export async function POST(request: Request) {
@@ -63,12 +67,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 
-  const body = await request.json() as { git_status: string; problem_description: string; lang?: 'es' | 'en' }
-  const { git_status, problem_description, lang } = body
+  const body = await request.json() as { git_status: string; problem_desc: string; lang?: 'es' | 'en' }
+  const { git_status, problem_desc, lang } = body
 
-  if (!git_status?.trim() || !problem_description?.trim()) {
+  if (!git_status?.trim() || !problem_desc?.trim()) {
     return NextResponse.json(
-      { error: 'Faltan campos: git_status y problem_description son requeridos' },
+      { error: 'Faltan campos: git_status y problem_desc son requeridos' },
       { status: 400 }
     )
   }
@@ -92,12 +96,36 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await generateFix({
-      provider: providerConfig.provider as Parameters<typeof generateFix>[0]['provider'],
+    const primaryConfig: ProviderConfig = {
+      provider: providerConfig.provider as ProviderConfig['provider'],
       apiKey: providerConfig.apiKey,
       model: providerConfig.model,
       lang: lang ?? 'es',
-    }, git_status, problem_description)
+    }
+
+    const configs: ProviderConfig[] = [primaryConfig]
+    const openrouterKey = process.env.OPENROUTER_API_KEY
+    const zenKey = process.env.ZEN_API_KEY
+
+    // Fallback bidireccional
+    if (providerConfig.provider !== 'openrouter' && openrouterKey) {
+      configs.push({
+        provider: 'openrouter',
+        apiKey: openrouterKey,
+        model: 'meta-llama/llama-3.3-70b-instruct:free',
+        lang: lang ?? 'es',
+      })
+    }
+    if (providerConfig.provider !== 'zen' && zenKey) {
+      configs.push({
+        provider: 'zen',
+        apiKey: zenKey,
+        model: 'minimax-m2.5-free',
+        lang: lang ?? 'es',
+      })
+    }
+
+    const result = await generateFixWithFallback(configs, git_status, problem_desc, user.id)
 
     return NextResponse.json(result)
   } catch (err) {

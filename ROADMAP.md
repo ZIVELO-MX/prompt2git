@@ -107,6 +107,23 @@ Antes de compartir el link con el mundo.
 
 ## Fase 5 — Crecimiento (post-lanzamiento)
 
+### Stripe — Conectar y configurar pasarela de pagos
+Conectar Stripe para manejar suscripciones, facturación y webhooks. Implementar:
+- Conexión de cuenta Stripe y configuración de productos/precios
+- Webhooks para sync de estado de suscripción (`customer.subscription.updated`, `invoice.paid`, etc.)
+- Server Actions para crear sesiones de checkout y portal de cliente
+- Tabla `subscriptions` en Supabase vinculada a `auth.users`
+- Cambio de magic link a creacion de cuenta, paa gestionar la info para los pagos
+### AI Gateway — Plan-based model routing
+Cuando la monetización esté activa, extender el sistema de fallback para seleccionar el modelo según el plan del usuario:
+- `free` → siempre modelo económico (openrouter free tier)
+- `pro` → modelo balanceado (ej. gpt-4o-mini, claude-haiku)
+- `pro_plus` → mejor modelo disponible (ej. gpt-4o, claude-sonnet)
+
+Implementar en `src/lib/ai-provider.ts` como una función `selectModelTier(plan, provider)` que devuelve el model ID correcto. No requiere nuevas dependencias; extiende el `PROVIDER_MAP` existente.
+
+
+
 Features que agregan valor sin comprometer la simpleza.
 
 - [ ] **Comandos públicos** — opción de marcar un comando como público y obtener un link para compartir (`prompt2git.app/c/<slug>`)

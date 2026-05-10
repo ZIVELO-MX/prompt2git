@@ -1,4 +1,7 @@
-import type { Provider, GenerateResult, FixResult } from '@/types'
+import type { Provider, Plan, GenerateResult, FixResult } from '@/types'
+import { FREE_MODELS, STARTER_MODEL_KEY } from '@/lib/models'
+export { FREE_MODELS } from '@/lib/models'
+import { logAIRequest } from '@/lib/ai-logger'
 
 export interface ProviderConfig {
   provider: Provider
@@ -14,7 +17,8 @@ const MODELS: Record<Provider, string> = {
   gemini:      'gemini-1.5-flash',
   groq:        'llama-3.1-8b-instant',
   mistral:     'mistral-small-latest',
-  openrouter:  'meta-llama/llama-3.1-8b-instruct:free',
+  openrouter:  'meta-llama/llama-3.3-70b-instruct:free',
+  zen:         'minimax-m2.5-free',
 }
 
 const OPENAI_COMPAT_ENDPOINTS: Partial<Record<Provider, string>> = {
@@ -22,9 +26,20 @@ const OPENAI_COMPAT_ENDPOINTS: Partial<Record<Provider, string>> = {
   groq:       'https://api.groq.com/openai/v1/chat/completions',
   mistral:    'https://api.mistral.ai/v1/chat/completions',
   openrouter: 'https://openrouter.ai/api/v1/chat/completions',
+  zen:        'https://opencode.ai/zen/v1/chat/completions',
 }
 
 export const DEFAULT_MODELS = MODELS
+
+const STARTER_DEFAULT = FREE_MODELS[STARTER_MODEL_KEY]!
+
+export function selectModel(plan: Plan, preferredModelKey?: string | null): { provider: Provider; model: string } {
+  if (plan === 'pro' && preferredModelKey && FREE_MODELS[preferredModelKey]) {
+    const m = FREE_MODELS[preferredModelKey]!
+    return { provider: m.provider, model: m.modelId }
+  }
+  return { provider: STARTER_DEFAULT.provider, model: STARTER_DEFAULT.modelId }
+}
 
 function buildPrompt(input: string, lang: 'es' | 'en' = 'es', repoContext?: { branch: string; last_commit: string }): string {
   const isEn = lang === 'en'
@@ -90,7 +105,7 @@ async function callOpenAICompat(config: ProviderConfig, prompt: string): Promise
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${config.apiKey}`,
   }
-  if (config.provider === 'openrouter') {
+  if (config.provider === 'openrouter' || config.provider === 'zen') {
     headers['HTTP-Referer'] = 'https://prompt2git.app'
     headers['X-Title'] = 'Prompt2Git'
   }
@@ -107,8 +122,10 @@ async function callOpenAICompat(config: ProviderConfig, prompt: string): Promise
     const err = await res.json().catch(() => ({})) as { error?: { message?: string } }
     throw new Error(err.error?.message ?? `${config.provider} error ${res.status}`)
   }
-  const data = await res.json() as { choices: Array<{ message: { content: string } }> }
-  return data.choices[0]?.message.content ?? ''
+  const data = await res.json() as { choices: Array<{ message: { content?: string; reasoning_content?: string } }> }
+  const message = data.choices[0]?.message
+  // Algunos modelos (DeepSeek, etc.) devuelven la respuesta en reasoning_content en vez de content
+  return message?.content || message?.reasoning_content || ''
 }
 
 async function callGemini(config: ProviderConfig, prompt: string): Promise<string> {
@@ -152,7 +169,8 @@ export async function generate(config: ProviderConfig, input: string): Promise<G
     case 'openai':
     case 'groq':
     case 'mistral':
-    case 'openrouter': raw = await callOpenAICompat(config, prompt); break
+    case 'openrouter':
+    case 'zen':        raw = await callOpenAICompat(config, prompt); break
     case 'gemini':     raw = await callGemini(config, prompt);       break
     default: throw new Error(`Proveedor no soportado: ${config.provider}`)
   }
@@ -219,10 +237,99 @@ export async function generateFix(config: ProviderConfig, gitStatus: string, pro
     case 'openai':
     case 'groq':
     case 'mistral':
-    case 'openrouter': raw = await callOpenAICompat(config, prompt); break
+    case 'openrouter':
+    case 'zen':        raw = await callOpenAICompat(config, prompt); break
     case 'gemini':     raw = await callGemini(config, prompt);       break
     default: throw new Error(`Proveedor no soportado: ${config.provider}`)
   }
 
   return parseFixResponse(raw)
+}
+
+export async function generateWithFallback(
+  configs: ProviderConfig[],
+  input: string,
+  userId: string,
+): Promise<GenerateResult & { provider: string; model: string }> {
+  let lastError: Error = new Error('No hay proveedores disponibles')
+
+  for (let i = 0; i < configs.length; i++) {
+    const config = configs[i]!
+    const isFallback = i > 0
+    const start = Date.now()
+    try {
+      const result = await generate(config, input)
+      logAIRequest({
+        userId,
+        provider: config.provider,
+        model: config.model,
+        latencyMs: Date.now() - start,
+        success: true,
+        inputLength: input.length,
+        isFallback,
+      })
+      return { ...result, provider: config.provider, model: config.model }
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      logAIRequest({
+        userId,
+        provider: config.provider,
+        model: config.model,
+        latencyMs: Date.now() - start,
+        success: false,
+        inputLength: input.length,
+        error: error.message,
+        isFallback,
+      })
+      if (error.message === 'not_git') throw error
+      lastError = error
+    }
+  }
+
+  throw lastError
+}
+
+export async function generateFixWithFallback(
+  configs: ProviderConfig[],
+  gitStatus: string,
+  problemDescription: string,
+  userId: string,
+): Promise<FixResult & { provider: string; model: string }> {
+  let lastError: Error = new Error('No hay proveedores disponibles')
+  const inputLength = gitStatus.length + problemDescription.length
+
+  for (let i = 0; i < configs.length; i++) {
+    const config = configs[i]!
+    const isFallback = i > 0
+    const start = Date.now()
+    try {
+      const result = await generateFix(config, gitStatus, problemDescription)
+      logAIRequest({
+        userId,
+        provider: config.provider,
+        model: config.model,
+        latencyMs: Date.now() - start,
+        success: true,
+        inputLength,
+        isFallback,
+      })
+      return { ...result, provider: config.provider, model: config.model }
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      logAIRequest({
+        userId,
+        provider: config.provider,
+        model: config.model,
+        latencyMs: Date.now() - start,
+        success: false,
+        inputLength,
+        error: error.message,
+        isFallback,
+      })
+      if (error.message === 'not_git') throw error
+      lastError = error
+    }
+  }
+
+  throw lastError
 }

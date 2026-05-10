@@ -1,4 +1,6 @@
-export type Provider = 'anthropic' | 'openai' | 'gemini' | 'groq' | 'mistral' | 'openrouter'
+export type Provider = 'anthropic' | 'openai' | 'gemini' | 'groq' | 'mistral' | 'openrouter' | 'zen'
+
+export type Plan = 'starter' | 'pro'
 
 export interface ExplanationItem {
   what: string

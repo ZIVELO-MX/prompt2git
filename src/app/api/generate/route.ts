@@ -1,16 +1,17 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { generate } from '@/lib/ai-provider'
+import { generateWithFallback, selectModel, type ProviderConfig } from '@/lib/ai-provider'
 import { generateEmbedding } from '@/lib/embeddings'
 import { checkRateLimit, FREE_LIMIT, PRO_LIMIT } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
+import type { Plan } from '@/types'
 
 function normalize(input: string): string {
   return input.toLowerCase().replace(/\s+/g, ' ').trim()
 }
 
-async function getProviderConfig(userId: string): Promise<{
-  plan: 'free' | 'pro'
+async function getProviderConfig(userId: string, selectedModelOverride?: string): Promise<{
+  plan: Plan
   provider: string
   apiKey: string
   model: string
@@ -18,7 +19,7 @@ async function getProviderConfig(userId: string): Promise<{
 }> {
   const supabase = await createClient()
 
-  const { data: providerConfig } = await supabase
+  const { data: byok } = await supabase
     .from('provider_keys')
     .select('id, provider, model, vault_id')
     .eq('user_id', userId)
@@ -26,38 +27,43 @@ async function getProviderConfig(userId: string): Promise<{
     .limit(1)
     .maybeSingle()
 
-  if (providerConfig) {
+  if (byok) {
     const admin = createAdminClient()
     const { data: secret } = await admin
       .schema('vault')
       .from('decrypted_secrets')
       .select('decrypted_secret')
-      .eq('id', providerConfig.vault_id)
+      .eq('id', byok.vault_id)
       .maybeSingle()
 
     if (secret?.decrypted_secret) {
       return {
         plan: 'pro',
-        provider: providerConfig.provider,
+        provider: byok.provider,
         apiKey: secret.decrypted_secret,
-        model: providerConfig.model,
+        model: byok.model,
         dailyLimit: PRO_LIMIT,
       }
     }
   }
 
-  const platformKey = process.env.OPENROUTER_API_KEY
-  if (!platformKey) {
-    throw new Error('free_tier_unavailable')
-  }
+  // Platform key path — read preferences + admin role
+  const { data: prefs } = await supabase
+    .from('user_preferences')
+    .select('selected_model, role')
+    .eq('user_id', userId)
+    .maybeSingle()
 
-  return {
-    plan: 'free',
-    provider: 'openrouter',
-    apiKey: platformKey,
-    model: 'meta-llama/llama-3.1-8b-instruct:free',
-    dailyLimit: FREE_LIMIT,
-  }
+  const isAdmin = prefs?.role === 'admin'
+  const modelKey = selectedModelOverride ?? prefs?.selected_model ?? null
+  const plan: Plan = isAdmin ? 'pro' : 'starter'
+  const { provider, model } = selectModel(plan, modelKey)
+  const apiKey = provider === 'zen'
+    ? process.env.ZEN_API_KEY
+    : process.env.OPENROUTER_API_KEY
+  if (!apiKey) throw new Error('free_tier_unavailable')
+
+  return { plan, provider, apiKey, model, dailyLimit: isAdmin ? PRO_LIMIT : FREE_LIMIT }
 }
 
 async function getEmbeddingKey(userId: string): Promise<string | undefined> {
@@ -94,9 +100,10 @@ export async function POST(request: Request) {
   const body = await request.json() as {
     input: string
     lang?: 'es' | 'en'
+    selectedModel?: string
     repoContext?: { branch: string; last_commit: string }
   }
-  const { input, lang, repoContext } = body
+  const { input, lang, selectedModel: bodySelectedModel, repoContext } = body
   if (!input?.trim()) {
     return NextResponse.json({ error: 'input es requerido' }, { status: 400 })
   }
@@ -106,7 +113,7 @@ export async function POST(request: Request) {
 
   let providerConfig: Awaited<ReturnType<typeof getProviderConfig>>
   try {
-    providerConfig = await getProviderConfig(user.id)
+    providerConfig = await getProviderConfig(user.id, bodySelectedModel)
   } catch {
     return NextResponse.json(
       { error: 'No hay proveedor configurado y el plan free no está disponible.' },
@@ -116,20 +123,21 @@ export async function POST(request: Request) {
 
   const rateLimit = await checkRateLimit(user.id, providerConfig.dailyLimit)
   if (!rateLimit.allowed) {
-    const planKey = providerConfig.plan === 'free' ? 'rate_limit_free' : 'rate_limit_pro'
     return NextResponse.json(
-      { error: planKey, remaining: 0, reset_at: rateLimit.resetAt },
+      { error: 'rate_limit', remaining: 0, reset_at: rateLimit.resetAt },
       { status: 429, headers: { 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': rateLimit.resetAt } }
     )
   }
 
   let fromCache = false
   const normalized = normalize(input)
+  let commandEmbedding: number[] | null = null
 
   try {
     const embeddingKey = await getEmbeddingKey(user.id)
     if (embeddingKey) {
-      const embedding = await generateEmbedding(normalized, embeddingKey)
+      commandEmbedding = await generateEmbedding(normalized, embeddingKey)
+      const embedding = commandEmbedding
 
       if (embedding.length > 0) {
         const { data: cached } = await supabase.rpc('match_commands', {
@@ -180,13 +188,39 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await generate({
-      provider: providerConfig.provider as Parameters<typeof generate>[0]['provider'],
+    const primaryConfig: ProviderConfig = {
+      provider: providerConfig.provider as ProviderConfig['provider'],
       apiKey: providerConfig.apiKey,
       model: providerConfig.model,
       lang: lang ?? 'es',
       repoContext,
-    }, input)
+    }
+
+    const configs: ProviderConfig[] = [primaryConfig]
+    const openrouterKey = process.env.OPENROUTER_API_KEY
+    const zenKey = process.env.ZEN_API_KEY
+
+    // Fallback bidireccional: si el primario falla, intentar el otro proveedor free disponible
+    if (providerConfig.provider !== 'openrouter' && openrouterKey) {
+      configs.push({
+        provider: 'openrouter',
+        apiKey: openrouterKey,
+        model: 'meta-llama/llama-3.3-70b-instruct:free',
+        lang: lang ?? 'es',
+        repoContext,
+      })
+    }
+    if (providerConfig.provider !== 'zen' && zenKey) {
+      configs.push({
+        provider: 'zen',
+        apiKey: zenKey,
+        model: 'minimax-m2.5-free',
+        lang: lang ?? 'es',
+        repoContext,
+      })
+    }
+
+    const result = await generateWithFallback(configs, input, user.id)
 
     const commandId = crypto.randomUUID()
     const now = new Date().toISOString()
@@ -196,11 +230,12 @@ export async function POST(request: Request) {
       user_id: user.id,
       input: input.trim(),
       command: result.command,
-      explanation: JSON.stringify(result.explanation),
-      flags: JSON.stringify(result.flags),
-      provider: providerConfig.provider,
-      model: providerConfig.model,
+      explanation: result.explanation,
+      flags: result.flags,
+      provider: result.provider,
+      model: result.model,
       created_at: now,
+      ...(commandEmbedding ? { embedding: commandEmbedding } : {}),
     }
 
     const { error: insertError } = await supabase
@@ -208,7 +243,7 @@ export async function POST(request: Request) {
       .insert(commandToInsert)
 
     if (insertError) {
-      console.error('Error al guardar comando en historial:', insertError.message)
+      console.error('Error al guardar comando en historial:', insertError.message, insertError.code, insertError.details)
     }
 
     return NextResponse.json({
@@ -219,8 +254,8 @@ export async function POST(request: Request) {
         command: result.command,
         explanation: result.explanation,
         flags: result.flags,
-        provider: providerConfig.provider,
-        model: providerConfig.model,
+        provider: result.provider,
+        model: result.model,
         created_at: now,
         from_cache: false,
       },

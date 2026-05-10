@@ -1,19 +1,52 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { HowItWorks } from '@/components/landing/how-it-works'
-import { LandingThemeToggle } from '@/components/landing/theme-toggle'
+import { EmailCTA } from '@/components/landing/email-cta'
 import { ClockIcon } from '@/components/ui/icons'
+import { t, getStoredLang, setStoredLang, type Lang } from '@/lib/i18n'
 import styles from './page.module.css'
 
 export default function LandingPage() {
+  const [lang, setLang] = useState<Lang>('es')
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    const stored = getStoredLang()
+    setLang(stored)
+    document.documentElement.lang = stored
+  }, [])
+
+  useEffect(() => {
+    document.documentElement.lang = lang
+  }, [lang])
+
+  function toggleLang() {
+    const next: Lang = lang === 'es' ? 'en' : 'es'
+    setLang(next)
+    setStoredLang(next)
+  }
+
+  function closeMenu() {
+    setMenuOpen(false)
+  }
+
+  const navItems = [
+    { href: '#como-funciona', label: t('landing.nav.how', lang) },
+    { href: '#features', label: t('landing.nav.features', lang) },
+    { href: '#comparativa', label: t('landing.nav.compare', lang) },
+  ]
+
   return (
     <div className={styles.root}>
 
       {/* ── Nav ────────────────────────────────── */}
-      <nav className={styles.nav}>
+      <nav className={styles.nav} aria-label="Main navigation">
         <div className={styles.navInner}>
           <div className={styles.navLogo}>
             <div className={styles.navLogoMark}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                 <circle cx="12" cy="3" r="1.8" fill="oklch(0.75 0.22 142)" />
                 <circle cx="12" cy="13" r="1.8" fill="oklch(0.75 0.22 142)" />
                 <circle cx="4" cy="8" r="1.8" fill="oklch(0.75 0.22 142)" />
@@ -23,15 +56,38 @@ export default function LandingPage() {
             <span className={styles.navWordmark}>Prompt<span>2</span>Git</span>
           </div>
           <ul className={styles.navLinks}>
-            <li><a href="#como-funciona">Cómo funciona</a></li>
-            <li><a href="#features">Features</a></li>
-            <li><a href="#comparativa">Comparativa</a></li>
-            <li><Link href="/pricing">Pricing</Link></li>
+            {navItems.map(item => (
+              <li key={item.href}><a href={item.href} onClick={closeMenu}>{item.label}</a></li>
+            ))}
           </ul>
           <div className={styles.navActions}>
-            <LandingThemeToggle />
-            <a href="/login" className={styles.navCta}>Empieza ahora →</a>
+            <button
+              onClick={toggleLang}
+              className={styles.langSwitch}
+              aria-label={lang === 'es' ? 'Switch to English' : 'Cambiar a Español'}
+            >
+              {lang === 'es' ? 'EN' : 'ES'}
+            </button>
+            <button
+              className={styles.hamburger}
+              onClick={() => setMenuOpen(o => !o)}
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={menuOpen}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                {menuOpen
+                  ? <path d="M4 4l10 10M14 4L4 14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  : <><path d="M3 5h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /><path d="M3 9h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /><path d="M3 13h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></>
+                }
+              </svg>
+            </button>
+            <a href="#beta" className={styles.navCta}>{t('landing.nav.cta', lang)}</a>
           </div>
+        </div>
+        <div className={`${styles.mobileMenu} ${menuOpen ? styles.open : ''}`}>
+          {navItems.map(item => (
+            <a key={item.href} href={item.href} onClick={closeMenu}>{item.label}</a>
+          ))}
         </div>
       </nav>
 
@@ -43,51 +99,39 @@ export default function LandingPage() {
           <div className={styles.heroContent}>
             <div className={styles.heroBadge}>
               <span className={styles.badgeDot} />
-              En producción · IA incluida · 20 comandos gratis
+              {t('landing.hero.badge', lang)}
             </div>
-            <h1 className={styles.heroTitle}>
-              Escribe en español.<br />
-              <em>Git</em> hace el resto.
-            </h1>
+            <h1 className={styles.heroTitle} dangerouslySetInnerHTML={{ __html: t('landing.hero.title', lang) }} />
             <p className={styles.heroSub}>
-              Describe lo que quieres hacer con tu repositorio en lenguaje natural
-              y obtén el comando Git exacto, explicado línea por línea.
+              {t('landing.hero.sub', lang)}
             </p>
             <div className={styles.heroActions}>
-              <a href="/login" className={styles.btnPrimary}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <a href="#beta" className={styles.btnPrimary}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <path d="M8 2l5 5-5 5M3 7h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                Empieza ahora
-              </a>
-              <a href="/app" className={styles.btnGhost}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M6.5 6C6.5 5.17 7.17 4.5 8 4.5s1.5.67 1.5 1.5c0 1-1.5 1.5-1.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  <circle cx="8" cy="11.5" r="0.8" fill="currentColor" />
-                </svg>
-                Ir a la app
+                {t('landing.hero.cta', lang)}
               </a>
             </div>
 
             {/* Terminal demo */}
-            <div className={styles.terminalWrap}>
+            <div className={styles.terminalWrap} role="img" aria-label={t('landing.terminal.aria', lang)}>
               <div className={styles.terminal}>
                 <div className={styles.terminalScan} />
                 <div className={styles.terminalBar}>
                   <div className={styles.dot} style={{ background: 'oklch(0.65 0.20 22)' }} />
                   <div className={styles.dot} style={{ background: 'oklch(0.78 0.18 72)' }} />
                   <div className={styles.dot} style={{ background: 'oklch(0.72 0.20 142)' }} />
-                  <span className={styles.terminalTitle}>PROMPT2GIT — bash</span>
+                  <span className={styles.terminalTitle}>{t('landing.terminal.title', lang)}</span>
                 </div>
                 <div className={styles.terminalBody}>
                   <div>
                     <span style={{ color: 'var(--text-muted)' }}>❯ </span>
-                    <span>quiero deshacer mi último commit pero conservar los archivos</span>
+                    <span>{t('landing.terminal.prompt', lang)}</span>
                   </div>
                   <hr className={styles.tSep} />
                   <div style={{ marginBottom: '10px' }}>
-                    <span className={styles.tLabel}>COMANDO GENERADO</span><br />
+                    <span className={styles.tLabel}>{t('landing.terminal.generated', lang)}</span><br />
                     <span style={{ color: 'var(--text-muted)' }}>$ </span>
                     <span style={{ color: 'var(--accent)' }}>git reset </span>
                     <span style={{ color: 'var(--amber)' }}>--soft </span>
@@ -95,12 +139,8 @@ export default function LandingPage() {
                   </div>
                   <hr className={styles.tSep} />
                   <div>
-                    <span className={styles.tLabelAmber}>EXPLICACIÓN</span><br />
-                    <span className={styles.tExplain}>
-                      Mueve HEAD un commit hacia atrás conservando todos los cambios<br />
-                      en el staging area. Perfecto para reescribir el mensaje de commit<br />
-                      o añadir más cambios antes de confirmar.
-                    </span>
+                    <span className={styles.tLabelAmber}>{t('landing.terminal.explanation_label', lang)}</span><br />
+                    <span className={styles.tExplain}>{t('landing.terminal.explanation', lang)}</span>
                   </div>
                   <hr className={styles.tSep} />
                   <div>
@@ -117,26 +157,26 @@ export default function LandingPage() {
       {/* ── Stats ──────────────────────────────── */}
       <div className={styles.proof}>
         <div className={styles.container}>
-            <p className={styles.proofLabel}>IA incluida en el plan Free · Mayo 2026</p>
+            <p className={styles.proofLabel}>{t('landing.stats.label', lang)}</p>
             <div className={styles.proofStats}>
               <div className={styles.statItem}>
-                <span className={styles.statNum}>20<span>/mes</span></span>
-                <span className={styles.statLbl}>Comandos gratis</span>
+                <span className={styles.statNum}>20<span>{t('landing.stats.per_month', lang)}</span></span>
+                <span className={styles.statLbl}>{t('landing.stats.free_cmds', lang)}</span>
               </div>
               <div className={styles.statDiv} />
               <div className={styles.statItem}>
                 <span className={styles.statNum}>✦</span>
-                <span className={styles.statLbl}>IA incluida · sin key</span>
+                <span className={styles.statLbl}>{t('landing.stats.ai_included', lang)}</span>
               </div>
               <div className={styles.statDiv} />
               <div className={styles.statItem}>
-                <span className={styles.statNum}>&lt;1<span>s</span></span>
-                <span className={styles.statLbl}>Tiempo de respuesta</span>
+                <span className={styles.statNum}>&lt;1<span>{t('landing.stats.second', lang)}</span></span>
+                <span className={styles.statLbl}>{t('landing.stats.response_time', lang)}</span>
               </div>
               <div className={styles.statDiv} />
               <div className={styles.statItem}>
                 <span className={styles.statNum}>6</span>
-                <span className={styles.statLbl}>Providers en Pro · BYOK</span>
+                <span className={styles.statLbl}>{t('landing.stats.providers', lang)}</span>
               </div>
             </div>
         </div>
@@ -147,14 +187,12 @@ export default function LandingPage() {
       {/* ── How it works ───────────────────────── */}
       <section id="como-funciona" className={styles.section}>
         <div className={styles.container}>
-          <div className={styles.sectionLabel}>Cómo funciona</div>
-          <h2 className={styles.sectionTitle}>
-            De intención a comando<br /><strong>en tres pasos</strong>
-          </h2>
+          <div className={styles.sectionLabel}>{t('landing.how.label', lang)}</div>
+          <h2 className={styles.sectionTitle} dangerouslySetInnerHTML={{ __html: t('landing.how.title', lang) }} />
           <p className={styles.sectionSub}>
-            Sin memorizar flags. Sin buscar en Stack Overflow. Sin cometer errores costosos.
+            {t('landing.how.sub', lang)}
           </p>
-          <HowItWorks />
+          <HowItWorks lang={lang} />
         </div>
       </section>
 
@@ -163,73 +201,74 @@ export default function LandingPage() {
       {/* ── Features ───────────────────────────── */}
       <section id="features" className={styles.section}>
         <div className={styles.container}>
-          <div className={styles.sectionLabel}>Features</div>
-          <h2 className={styles.sectionTitle}>
-            Todo lo que necesitas<br /><strong>para dominar Git</strong>
-          </h2>
+          <div className={styles.sectionLabel}>{t('landing.features.label', lang)}</div>
+          <h2 className={styles.sectionTitle} dangerouslySetInnerHTML={{ __html: t('landing.features.title', lang) }} />
           <div className={styles.featuresGrid}>
             <div className={styles.featCard}>
-              <div className={styles.featIcon} style={{ background: 'var(--accent-dim)', border: '1px solid oklch(0.75 0.22 142 / 0.25)' }}>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M4 10l4 4 8-8" stroke="oklch(0.75 0.22 142)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              <div className={styles.featIcon} style={{ background: 'var(--accent-dim)', border: '1px solid var(--accent-dim)' }}>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="M4 10l4 4 8-8" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
-              <div className={styles.featTitle}>Traducción exacta</div>
-              <p className={styles.featText}>Generamos el comando preciso para tu intención, con los flags y argumentos correctos. Sin aproximaciones.</p>
+              <div className={styles.featTitle}>{t('landing.features.exact_translation', lang)}</div>
+              <p className={styles.featText}>{t('landing.features.exact_translation_d', lang)}</p>
               <div className={styles.featCode}>git reset --soft HEAD~1</div>
             </div>
 
             <div className={styles.featCard}>
-              <div className={styles.featIcon} style={{ background: 'var(--amber-dim)', border: '1px solid oklch(0.78 0.18 72 / 0.25)', color: 'oklch(0.78 0.18 72)' }}>
+              <div className={styles.featIcon} style={{ background: 'var(--amber-dim)', border: '1px solid var(--amber-dim)' }}>
                 <ClockIcon />
               </div>
-              <div className={styles.featTitle}>Historial de sesión</div>
-              <p className={styles.featText}>Todos tus comandos generados guardados y accesibles. Busca, reutiliza y adapta sin repetir tu intención.</p>
+              <div className={styles.featTitle}>{t('landing.features.history', lang)}</div>
+              <p className={styles.featText}>{t('landing.features.history_d', lang)}</p>
             </div>
 
             <div className={styles.featCard}>
-              <div className={styles.featIcon} style={{ background: 'var(--blue-dim)', border: '1px solid oklch(0.72 0.16 240 / 0.25)' }}>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M10 3L3 7l7 3.5L17 7 10 3z" stroke="oklch(0.72 0.16 240)" strokeWidth="1.5" strokeLinejoin="round" />
-                  <path d="M6 9v4c0 0 1.5 2 4 2s4-2 4-2V9" stroke="oklch(0.72 0.16 240)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <div className={styles.featIcon} style={{ background: 'var(--blue-dim)', border: '1px solid var(--blue-dim)' }}>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="M10 3L3 7l7 3.5L17 7 10 3z" stroke="var(--blue)" strokeWidth="1.5" strokeLinejoin="round" />
+                  <path d="M6 9v4c0 0 1.5 2 4 2s4-2 4-2V9" stroke="var(--blue)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
               <div className={styles.featTitleRow}>
-                <div className={styles.featTitle}>Modo Educativo</div>
-                <span className={styles.featBadgeFree}>5 USOS/SEM · FREE</span>
+                <div className={styles.featTitle}>{t('landing.features.edu', lang)}</div>
+                <span className={styles.featBadgeFree}>{t('landing.features.edu_badge', lang)}</span>
               </div>
-              <p className={styles.featText}>Activa el modo educativo y aprende el significado de cada flag con tooltips interactivos. <strong>5 usos gratuitos por semana</strong> — ilimitado en Pro.</p>
+              <p className={styles.featText} dangerouslySetInnerHTML={{ __html: t('landing.features.edu_d', lang) }} />
             </div>
 
             <div className={styles.featCard}>
-              <div className={styles.featIcon} style={{ background: 'var(--purple-dim)', border: '1px solid oklch(0.72 0.18 295 / 0.25)' }}>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <rect x="3" y="6" width="14" height="10" rx="2" stroke="oklch(0.72 0.18 295)" strokeWidth="1.5" />
-                  <path d="M7 6V5a3 3 0 016 0v1" stroke="oklch(0.72 0.18 295)" strokeWidth="1.5" />
+              <div className={styles.featIcon} style={{ background: 'var(--purple-dim)', border: '1px solid var(--purple-dim)' }}>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <rect x="3" y="6" width="14" height="10" rx="2" stroke="var(--purple)" strokeWidth="1.5" />
+                  <path d="M7 6V5a3 3 0 016 0v1" stroke="var(--purple)" strokeWidth="1.5" />
                 </svg>
               </div>
-              <div className={styles.featTitle}>Validación de intención</div>
-              <p className={styles.featText}>Si tu solicitud no es Git-relacionada, te lo indicamos. Sin comandos inventados ni alucinaciones peligrosas.</p>
+              <div className={styles.featTitle}>{t('landing.features.validation', lang)}</div>
+              <p className={styles.featText}>{t('landing.features.validation_d', lang)}</p>
             </div>
 
             <div className={styles.featCard}>
-              <div className={styles.featIcon} style={{ background: 'var(--purple-dim)', border: '1px solid oklch(0.72 0.18 295 / 0.25)' }}>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <circle cx="10" cy="10" r="7" stroke="oklch(0.72 0.18 295)" strokeWidth="1.5"/>
-                  <path d="M10 7v3l2 2" stroke="oklch(0.72 0.18 295)" strokeWidth="1.5" strokeLinecap="round"/>
+              <div className={styles.featIcon} style={{ background: 'var(--blue-dim)', border: '1px solid var(--blue-dim)' }}>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <circle cx="10" cy="10" r="7" stroke="var(--blue)" strokeWidth="1.5"/>
+                  <path d="M10 7v3l2 2" stroke="var(--blue)" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
               </div>
-              <div className={styles.featTitle}>Multi-provider · Pro</div>
-              <p className={styles.featText}>En el plan Pro conectás tu propia API key (BYOK) del proveedor que prefieras: Anthropic, OpenAI, Gemini, Groq, Mistral u OpenRouter. Comandos ilimitados, tus costos.</p>
-              <div className={styles.featCode}>6 providers · BYOK en Pro</div>
+              <div className={styles.featTitle}>{t('landing.features.multi_provider', lang)}</div>
+              <p className={styles.featText}>{t('landing.features.multi_provider_d', lang)}</p>
+              <div className={styles.featCode}>{t('landing.features.multi_provider_code', lang)}</div>
             </div>
 
             <div className={styles.featCard}>
-              <div className={styles.featIcon} style={{ background: 'var(--green-dim)', border: '1px solid oklch(0.76 0.22 142 / 0.25)', color: 'oklch(0.76 0.22 142)' }}>
-                <ClockIcon />
+              <div className={styles.featIcon} style={{ background: 'var(--purple-dim)', border: '1px solid var(--purple-dim)' }}>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="M15 8a5 5 0 0 0-9-2M5 12a5 5 0 0 0 9 2" stroke="var(--purple)" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M14 3l2 3-3 2M6 17l-2-3 3-2" stroke="var(--purple)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </div>
-              <div className={styles.featTitle}>Historial sincronizado</div>
-              <p className={styles.featText}>Iniciá sesión con Magic Link o GitHub y tu historial de comandos se sincroniza entre todos tus dispositivos.</p>
+              <div className={styles.featTitle}>{t('landing.features.sync_history', lang)}</div>
+              <p className={styles.featText}>{t('landing.features.sync_history_d', lang)}</p>
             </div>
           </div>
         </div>
@@ -240,58 +279,56 @@ export default function LandingPage() {
       {/* ── Comparativa ────────────────────────── */}
       <section id="comparativa" className={styles.section}>
         <div className={styles.container}>
-          <div className={styles.sectionLabel}>Comparativa</div>
-          <h2 className={styles.sectionTitle}>
-            Antes y después de<br /><strong>Prompt2Git</strong>
-          </h2>
+          <div className={styles.sectionLabel}>{t('landing.compare.label', lang)}</div>
+          <h2 className={styles.sectionTitle} dangerouslySetInnerHTML={{ __html: t('landing.compare.title', lang) }} />
           <p className={styles.sectionSub}>
-            El flujo de trabajo tradicional con Git tiene demasiada fricción para quienes están aprendiendo.
+            {t('landing.compare.sub', lang)}
           </p>
           <div className={styles.compareWrap}>
             <div className={styles.compareCol}>
               <div className={styles.compareHeader}>
-                <span className={`${styles.compareBadge} ${styles.compareBadgeBefore}`}>SIN PROMPT2GIT</span>
+                <span className={`${styles.compareBadge} ${styles.compareBadgeBefore}`}>{t('landing.compare.before_badge', lang)}</span>
               </div>
               <div className={styles.compareBody}>
                 <div className={`${styles.compareRow} ${styles.compareRowBad}`}>
-                  <span className={styles.iconBad}>✕</span>
-                  <span>Buscar en Google <em>&quot;git undo last commit&quot;</em>, elegir entre 5 respuestas contradictorias</span>
+                  <span className={styles.iconBad} aria-hidden="true">✕</span>
+                  <span dangerouslySetInnerHTML={{ __html: t('landing.compare.row1', lang) }} />
                 </div>
                 <div className={`${styles.compareRow} ${styles.compareRowBad}`}>
-                  <span className={styles.iconBad}>✕</span>
-                  <span>Leer la documentación de <code className={styles.codeInline}>git reset</code> sin entender cuándo usar <code className={styles.codeInline}>--soft</code> vs <code className={styles.codeInline}>--hard</code></span>
+                  <span className={styles.iconBad} aria-hidden="true">✕</span>
+                  <span dangerouslySetInnerHTML={{ __html: t('landing.compare.row2', lang) }} />
                 </div>
                 <div className={`${styles.compareRow} ${styles.compareRowBad}`}>
-                  <span className={styles.iconBad}>✕</span>
-                  <span>Ejecutar el comando equivocado y perder cambios del working tree</span>
+                  <span className={styles.iconBad} aria-hidden="true">✕</span>
+                  <span>{t('landing.compare.row3', lang)}</span>
                 </div>
                 <div className={`${styles.compareRow} ${styles.compareRowBad}`}>
-                  <span className={styles.iconBad}>✕</span>
-                  <span>Volver a buscar cómo deshacer el comando incorrecto</span>
+                  <span className={styles.iconBad} aria-hidden="true">✕</span>
+                  <span>{t('landing.compare.row4', lang)}</span>
                 </div>
               </div>
             </div>
 
             <div className={`${styles.compareCol} ${styles.compareColAfter}`}>
               <div className={styles.compareHeader}>
-                <span className={`${styles.compareBadge} ${styles.compareBadgeAfter}`}>✓ CON PROMPT2GIT</span>
+                <span className={`${styles.compareBadge} ${styles.compareBadgeAfter}`}>{t('landing.compare.after_badge', lang)}</span>
               </div>
               <div className={styles.compareBody}>
                 <div className={`${styles.compareRow} ${styles.compareRowGood}`}>
-                  <span className={styles.iconGood}>✓</span>
-                  <span>Escribes <em>&quot;deshacer último commit manteniendo los cambios&quot;</em> en español</span>
+                  <span className={styles.iconGood} aria-hidden="true">✓</span>
+                  <span dangerouslySetInnerHTML={{ __html: t('landing.compare.row5', lang) }} />
                 </div>
                 <div className={`${styles.compareRow} ${styles.compareRowGood}`}>
-                  <span className={styles.iconGood}>✓</span>
-                  <span>Obtienes <code className={`${styles.codeInline} ${styles.codeGreen}`}>git reset --soft HEAD~1</code> con explicación clara en segundos</span>
+                  <span className={styles.iconGood} aria-hidden="true">✓</span>
+                  <span>{t('landing.compare.row6_pre', lang)}<code className={`${styles.codeInline} ${styles.codeGreen}`}>git reset --soft HEAD~1</code>{t('landing.compare.row6_post', lang)}</span>
                 </div>
                 <div className={`${styles.compareRow} ${styles.compareRowGood}`}>
-                  <span className={styles.iconGood}>✓</span>
-                  <span>Activas Modo Educativo y entiendes exactamente qué hace cada flag antes de ejecutar</span>
+                  <span className={styles.iconGood} aria-hidden="true">✓</span>
+                  <span>{t('landing.compare.row7', lang)}</span>
                 </div>
                 <div className={`${styles.compareRow} ${styles.compareRowGood}`}>
-                  <span className={styles.iconGood}>✓</span>
-                  <span>Copias con un clic y ejecutas con confianza. El historial guarda el comando para reutilizar.</span>
+                  <span className={styles.iconGood} aria-hidden="true">✓</span>
+                  <span>{t('landing.compare.row8', lang)}</span>
                 </div>
               </div>
             </div>
@@ -304,41 +341,39 @@ export default function LandingPage() {
       {/* ── Testimonials ───────────────────────── */}
       <section className={styles.section}>
         <div className={styles.container}>
-          <div className={styles.sectionLabel}>Comunidad beta</div>
-          <h2 className={styles.sectionTitle}>
-            Lo que dicen los<br /><strong>primeros usuarios</strong>
-          </h2>
+          <div className={styles.sectionLabel}>{t('landing.testimonials.label', lang)}</div>
+          <h2 className={styles.sectionTitle} dangerouslySetInnerHTML={{ __html: t('landing.testimonials.title', lang) }} />
           <div className={styles.testiGrid}>
             <div className={styles.testiCard}>
-              <div className={styles.stars}>★★★★★</div>
-              <p className={styles.testiQuote}>&quot;Llevo 2 meses aprendiendo Git y siempre me trabo con los flags de reset. Prompt2Git me los explicó mejor que cualquier tutorial.&quot;</p>
+              <div className={styles.stars} aria-label="5 out of 5 stars">★★★★★</div>
+              <p className={styles.testiQuote}>&quot;{t('landing.testi.1.quote', lang)}&quot;</p>
               <div className={styles.testiAuthor}>
-                <div className={styles.testiAvatar} style={{ color: 'var(--accent)' }}>AL</div>
+                <div className={styles.testiAvatar} style={{ color: 'var(--accent)' }}>{t('landing.testi.1.initials', lang)}</div>
                 <div>
-                  <div className={styles.testiName}>Andrea López</div>
-                  <div className={styles.testiRole}>Dev Junior · Bootcamp LATAM</div>
+                  <div className={styles.testiName}>{t('landing.testi.1.name', lang)}</div>
+                  <div className={styles.testiRole}>{t('landing.testi.1.role', lang)}</div>
                 </div>
               </div>
             </div>
             <div className={styles.testiCard}>
-              <div className={styles.stars}>★★★★★</div>
-              <p className={styles.testiQuote}>&quot;Finalmente puedo trabajar con ramas sin abrir Stack Overflow cada 5 minutos. El modo educativo es oro para el equipo.&quot;</p>
+              <div className={styles.stars} aria-label="5 out of 5 stars">★★★★★</div>
+              <p className={styles.testiQuote}>&quot;{t('landing.testi.2.quote', lang)}&quot;</p>
               <div className={styles.testiAuthor}>
-                <div className={styles.testiAvatar} style={{ color: 'var(--blue)' }}>BR</div>
+                <div className={styles.testiAvatar} style={{ color: 'var(--blue)' }}>{t('landing.testi.2.initials', lang)}</div>
                 <div>
-                  <div className={styles.testiName}>Benjamin Rodriguez</div>
-                  <div className={styles.testiRole}>Dev Junior · Oracle</div>
+                  <div className={styles.testiName}>{t('landing.testi.2.name', lang)}</div>
+                  <div className={styles.testiRole}>{t('landing.testi.2.role', lang)}</div>
                 </div>
               </div>
             </div>
             <div className={styles.testiCard}>
-              <div className={styles.stars}>★★★★★</div>
-              <p className={styles.testiQuote}>&quot;Lo uso para onboarding de nuevos devs. Les digo que usen Prompt2Git las primeras semanas y aprenden los comandos sin fricción.&quot;</p>
+              <div className={styles.stars} aria-label="5 out of 5 stars">★★★★★</div>
+              <p className={styles.testiQuote}>&quot;{t('landing.testi.3.quote', lang)}&quot;</p>
               <div className={styles.testiAuthor}>
-                <div className={styles.testiAvatar} style={{ color: 'var(--amber)' }}>SC</div>
+                <div className={styles.testiAvatar} style={{ color: 'var(--amber)' }}>{t('landing.testi.3.initials', lang)}</div>
                 <div>
-                  <div className={styles.testiName}>Sofía Cárdenas</div>
-                  <div className={styles.testiRole}>Engineering Manager · Colombia</div>
+                  <div className={styles.testiName}>{t('landing.testi.3.name', lang)}</div>
+                  <div className={styles.testiRole}>{t('landing.testi.3.role', lang)}</div>
                 </div>
               </div>
             </div>
@@ -348,22 +383,15 @@ export default function LandingPage() {
 
       <hr className={styles.divider} />
 
-      {/* ── CTA ────────────────────────────────── */}
+      {/* ── Beta waitlist ───────────────────────── */}
       <section className={styles.ctaSection} id="beta">
         <div className={styles.container}>
           <div className={styles.ctaBorder}>
             <div className={styles.ctaBg} />
-            <h2 className={styles.ctaTitle}>
-              ¿Listo para olvidar<br /><strong>los flags de Git</strong>?
-            </h2>
-            <p className={styles.ctaSub}>Empezá gratis — la IA está incluida, no necesitás configurar nada. Sin espera, sin lista de espera.</p>
-            <a href="/login" className={styles.btnPrimary} style={{ fontSize: 15, padding: '14px 36px' }}>
-              <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-                <path d="M8 2l5 5-5 5M3 7h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Empieza ahora — es gratis
-            </a>
-            <p className={styles.ctaNote} style={{ marginTop: 16 }}>Sin registro complicado · Magic Link o GitHub · 20 comandos gratis al mes · IA incluida</p>
+            <h2 className={styles.ctaTitle} dangerouslySetInnerHTML={{ __html: t('landing.cta.title', lang) }} />
+            <p className={styles.ctaSub}>{t('landing.cta.sub', lang)}</p>
+            <EmailCTA lang={lang} />
+            <p className={styles.ctaNote} style={{ marginTop: 16 }}>{t('landing.cta.note', lang)}</p>
           </div>
         </div>
       </section>
@@ -374,7 +402,7 @@ export default function LandingPage() {
           <div className={styles.footerInner}>
             <div className={styles.footerLeft}>
               <div className={styles.navLogoMark}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <circle cx="12" cy="3" r="1.8" fill="oklch(0.75 0.22 142)" />
                   <circle cx="12" cy="13" r="1.8" fill="oklch(0.75 0.22 142)" />
                   <circle cx="4" cy="8" r="1.8" fill="oklch(0.75 0.22 142)" />
@@ -382,26 +410,25 @@ export default function LandingPage() {
                 </svg>
               </div>
               <span className={styles.footerName}>Prompt<span>2</span>Git</span>
-              <span className={styles.footerCopy}>© 2026 · By <strong style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>ZIVELO</strong></span>
+              <span className={styles.footerCopy}>
+                © {new Date().getFullYear()} · {t('landing.footer.by', lang)} <strong style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>ZIVELO</strong>
+              </span>
             </div>
             <div className={styles.footerRight}>
               <div className={styles.socialLinks}>
-                <a href="#" aria-label="GitHub" className={styles.socialLink}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" /></svg>
+                <a href="https://x.com/zivelomx" target="_blank" rel="noopener noreferrer" aria-label="X / Twitter" className={styles.socialLink}>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
                 </a>
-                <a href="#" aria-label="X / Twitter" className={styles.socialLink}>
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
-                </a>
-                <a href="#" aria-label="LinkedIn" className={styles.socialLink}>
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
+                <a href="https://www.instagram.com/zivelomex" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className={styles.socialLink}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
                 </a>
               </div>
               <div className={styles.footerDivider} />
               <ul className={styles.footerLinks}>
                 <li><a href="mailto:contact@zivelo.dev">contact@zivelo.dev</a></li>
-                <li><a href="#">Privacidad</a></li>
-                <li><a href="#">Términos</a></li>
-                <li><Link href="/app">App →</Link></li>
+                <li><Link href="/privacidad">{t('landing.footer.privacidad', lang)}</Link></li>
+                <li><Link href="/terminos">{t('landing.footer.terminos', lang)}</Link></li>
+                <li><Link href="/app">{t('landing.footer.app', lang)}</Link></li>
               </ul>
             </div>
           </div>

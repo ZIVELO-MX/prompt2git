@@ -5,6 +5,7 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'Prompt2Git — Natural Language to Git',
   description: 'Describe lo que quieres hacer con Git y obtén el comando correcto al instante.',
+  icons: { icon: '/favicon.svg' },
   openGraph: {
     title: 'Prompt2Git',
     description: 'Natural Language → Git commands',

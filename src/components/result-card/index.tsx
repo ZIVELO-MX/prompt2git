@@ -9,9 +9,11 @@ import styles from './result-card.module.css'
 interface Props {
   result: Command
   eduMode: boolean
+  isFavorite?: boolean
+  onToggleFavorite?: () => void
 }
 
-export function ResultCard({ result, eduMode }: Props) {
+export function ResultCard({ result, eduMode, isFavorite, onToggleFavorite }: Props) {
   const [copied, setCopied]           = useState(false)
   const [expanded, setExpanded]       = useState(true)
 
@@ -33,25 +35,38 @@ export function ResultCard({ result, eduMode }: Props) {
               <span className={styles.cacheBadge}>⚡ Desde cache</span>
             )}
           </div>
-          <button
-            className={`${styles.copyBtn} ${copied ? styles.copied : ''}`}
-            onClick={handleCopy}
-            type="button"
-          >
-            {copied ? <CheckIcon /> : <CopyIcon />}
-            {copied ? 'Copiado' : 'Copiar'}
-          </button>
+          <div className={styles.codeHeaderActions}>
+            {onToggleFavorite && (
+              <button
+                type="button"
+                className={`${styles.starBtn} ${isFavorite ? styles.starred : ''}`}
+                onClick={onToggleFavorite}
+                title={isFavorite ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+                aria-pressed={isFavorite}
+              >
+                {isFavorite ? '★' : '☆'}
+              </button>
+            )}
+            <button
+              className={`${styles.copyBtn} ${copied ? styles.copied : ''}`}
+              onClick={handleCopy}
+              type="button"
+            >
+              {copied ? <CheckIcon /> : <CopyIcon />}
+              {copied ? 'Copiado' : 'Copiar'}
+            </button>
+          </div>
         </div>
 
         <div className={styles.codeBody}>
           <CommandWithFlags
-            command={result.command}
-            flags={result.flags}
+            command={result.command ?? ''}
+            flags={result.flags ?? []}
             eduMode={eduMode}
           />
         </div>
 
-        {eduMode && result.flags.length > 0 && (
+        {eduMode && Array.isArray(result.flags) && result.flags.length > 0 && (
           <div className={styles.eduHint}>
             <MortarboardIcon />
             Toca un flag en <span className={styles.eduHintCode}>naranja</span> para ver su significado
@@ -75,7 +90,7 @@ export function ResultCard({ result, eduMode }: Props) {
           </span>
         </button>
 
-        {expanded && (
+        {expanded && Array.isArray(result.explanation) && (
           <div className={styles.explBody}>
             {result.explanation.map((item, i) => (
               <div key={i} className={styles.explItem}>

@@ -45,3 +45,17 @@ next-env.d.ts
 # Misc
 *.log
 .ai-workspace
+
+# VS Code extension (local only — not part of web deployment)
+packages/vscode-extension/
+
+# AI workspace y archivos locales
+ai-workspace/
+node-compile-cache/
+feedback-prompt2git.md
+
+# HTML de referencia/diseño (no son parte del código fuente)
+"Pricing Details.html"
+"Pricing Modal.html"
+Pricing\ Details.html
+Pricing\ Modal.html

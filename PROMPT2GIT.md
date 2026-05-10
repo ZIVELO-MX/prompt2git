@@ -256,6 +256,8 @@ Todo lo documentado arriba: traducción NL→Git, modo educativo, historial + FT
 ### Fase 5 — Monetización
 **Objetivo:** convertir el valor creado en las fases anteriores en ingresos sostenibles.
 
+- [ ] **Stripe** — conectar y configurar pasarela de pagos (productos, precios, webhooks, checkout session, customer portal)
+- [ ] **Tabla `subscriptions`** en Supabase vinculada a `auth.users` para reflejar estado de suscripción desde webhooks de Stripe
 - [ ] **Tier Free** — límite diario de queries, sin cache semántico, sin contexto GitHub.
 - [ ] **Tier Pro ($8–12/mes)** — cache inteligente, historial completo, multi-provider, contexto GitHub, extensión VS Code.
 - [ ] **BYOK como diferencial** — usuarios con sus propias keys no cuentan contra el límite de queries (incentivo para traer key).
