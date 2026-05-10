@@ -2,7 +2,7 @@
 
 > Describe lo que quieres hacer con Git en lenguaje natural. Obtén el comando correcto al instante.
 
-Herramienta web que traduce descripciones en lenguaje natural a comandos Git usando el proveedor de IA que elijas. El plan Free incluye IA gestionada (sin API key propia). El plan Pro soporta BYOK (Bring Your Own Key) con 6 proveedores.
+Herramienta web que traduce descripciones en lenguaje natural a comandos Git usando IA. El plan Starter incluye IA gestionada gratuita (sin API key propia). El plan Pro desbloquea elección de modelo y BYOK con 6 proveedores adicionales.
 
 ---
 
@@ -15,9 +15,10 @@ Herramienta web que traduce descripciones en lenguaje natural a comandos Git usa
 | Base de datos | Supabase Postgres + RLS |
 | Cifrado de keys | Supabase Vault |
 | Deploy | Vercel |
-| AI Providers | Anthropic, OpenAI, Gemini, Groq, Mistral, OpenRouter |
+| AI Gateway | OpenRouter + OpenCode Zen (6 modelos free) |
+| AI Providers (BYOK) | Anthropic, OpenAI, Gemini, Groq, Mistral, OpenRouter |
 | Cache semántico | pgvector (Supabase) — threshold 0.92 |
-| Rate limiting | 20 req/mes plan Free, ilimitado Pro |
+| Rate limiting | 20 cmd/mes Starter · 200 cmd/mes Pro |
 | Estilos | CSS custom properties (sin Tailwind, sin CSS-in-JS) |
 | i18n | Diccionario es/en en `src/lib/i18n.ts` |
 
@@ -32,53 +33,65 @@ GitSpeak/
 ├── middleware.ts              — protección de rutas con Supabase Auth
 ├── .env.example               — variables de entorno necesarias
 │
+├── docs/
+│   └── AI_GATEWAY.md          — arquitectura del sistema de enrutamiento de modelos
+│
 ├── supabase/
 │   └── migrations/
 │       ├── 001_schema.sql     — tablas: provider_keys, commands
 │       ├── 002_rls.sql        — Row Level Security
 │       ├── 003_cache.sql      — cache semántico con pgvector
 │       ├── 004_rate_limit.sql — rate limiting por usuario
-│       └── 005_github.sql     — tabla github_connections + Vault
+│       ├── 005_github.sql     — tabla github_connections + Vault
+│       ├── 006_favorites.sql  — tabla user_favorites
+│       ├── 007_preferences.sql— tabla user_preferences (lang, theme, provider)
+│       └── 008_selected_model.sql — columna selected_model en user_preferences
 │
 └── src/
     ├── lib/
     │   ├── env.ts             — validación de variables de entorno al arrancar
     │   ├── i18n.ts            — diccionario es/en + helper t()
-    │   ├── ai-provider.ts     — abstracción multi-proveedor (6 providers)
+    │   ├── models.ts          — catálogo FREE_MODELS (cliente + servidor)
+    │   ├── ai-provider.ts     — abstracción multi-proveedor + selectModel()
+    │   ├── ai-logger.ts       — logger de requests de IA
     │   ├── github.ts          — helpers para GitHub API
     │   └── supabase/
     │       ├── client.ts      — createBrowserClient
     │       ├── server.ts      — createServerClient (Server Components)
     │       └── types.ts       — tipos generados por Supabase CLI
     │
-    ├── types/index.ts         — tipos compartidos (Command, FixResult, GitHubRepo…)
+    ├── types/index.ts         — tipos compartidos (Command, Plan, Provider, FixResult…)
     │
     ├── app/
     │   ├── globals.css        — design tokens CSS + reset
     │   ├── layout.tsx         — root layout + fonts + validación env
-    │   ├── page.tsx           — landing: hero, features, pricing CTA
+    │   ├── page.tsx           — landing: hero, features, pricing CTA (es/en)
     │   ├── pricing/page.tsx   — página de planes detallada
     │   ├── login/page.tsx     — auth screen (Magic Link + GitHub OAuth)
     │   ├── app/
-    │   │   ├── page.tsx       — app principal: sidebar + topbar + input + resultado
+    │   │   ├── page.tsx       — app principal: sidebar + topbar + input + resultado + selector de modelo
     │   │   └── settings/
     │   │       └── page.tsx   — API keys por proveedor + repo GitHub activo
     │   └── api/
-    │       ├── generate/      — POST: NL → comando Git (cache semántico + rate limit)
-    │       ├── commands/      — GET: historial del usuario
-    │       ├── settings/keys/ — GET/POST/DELETE: gestión de API keys
+    │       ├── generate/      — POST: NL → comando Git (gateway + cache + rate limit)
+    │       ├── commands/      — GET: historial · GET /popular: top 5 frecuentes
+    │       ├── favorites/     — GET/POST/DELETE: favoritos del usuario
+    │       ├── preferences/   — GET/PATCH: preferencias (lang, model, sidebar…)
+    │       ├── usage/month/   — GET: comandos usados en el mes + plan
+    │       ├── keys/          — GET/POST/DELETE: gestión de API keys (BYOK)
     │       └── github/
-    │           ├── repos/     — GET: repositorios del usuario (GitHub API)
+    │           ├── repos/     — GET: repositorios del usuario
     │           ├── context/   — GET: rama + último commit + PRs abiertos
     │           └── fix/       — POST: diagnóstico y plan de recuperación Git
     │
     └── components/
-        ├── sidebar/           — historial de comandos con búsqueda
-        ├── result-card/       — resultado + explicación + flags
-        ├── fix-result-card/   — pasos de recuperación numerados con nivel de riesgo
-        ├── context-strip/     — barra de contexto repo activo (bajo topbar)
-        ├── pricing-modal/     — modal de planes (Free / Pro / Teams)
-        ├── onboarding/        — flow de onboarding primera vez
+        ├── sidebar/           — historial + favoritos con búsqueda
+        ├── result-card/       — resultado + explicación + flags + favorito
+        ├── fix-result-card/   — pasos de recuperación con nivel de riesgo
+        ├── quick-actions/     — chips de los 5 comandos más frecuentes
+        ├── context-strip/     — barra de contexto repo activo
+        ├── pricing-modal/     — modal de planes
+        ├── onboarding/        — flow de primer uso
         └── ui/                — iconos SVG, primitivas compartidas
 ```
 
@@ -98,14 +111,17 @@ npm install
 
 ```bash
 cp .env.example .env.local
-# Editar .env.local con tus keys de Supabase
+# Completar con las keys requeridas
 ```
 
 Variables requeridas:
+
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+OPENROUTER_API_KEY=
+ZEN_API_KEY=
 ```
 
 ### 3. Migraciones de Supabase
@@ -115,7 +131,7 @@ SUPABASE_SERVICE_ROLE_KEY=
 supabase start
 supabase db push
 
-# O ejecutar los .sql en el SQL Editor de Supabase Cloud (en orden: 001 → 005)
+# O ejecutar los .sql en el SQL Editor de Supabase Cloud (en orden: 001 → 008)
 ```
 
 ### 4. Generar tipos de Supabase
@@ -130,6 +146,25 @@ npm run db:types
 npm run dev
 # → http://localhost:3000
 ```
+
+---
+
+## AI Gateway
+
+El gateway enruta cada request al modelo correcto según el plan del usuario, sin costo de inferencia para la plataforma. Ver [`docs/AI_GATEWAY.md`](./docs/AI_GATEWAY.md) para la arquitectura completa.
+
+### Modelos disponibles (sin BYOK)
+
+| Modelo | Provider | Plan |
+|--------|----------|------|
+| Llama 3.1 8B | OpenRouter | Starter (default) |
+| Big Pickle | OpenCode Zen | Pro |
+| MiniMax M2.5 | OpenCode Zen | Pro |
+| Ling 2.6 Flash | OpenCode Zen | Pro |
+| Hy3 Preview | OpenCode Zen | Pro |
+| Nemotron 3 Super | OpenCode Zen | Pro |
+
+Usuarios Pro ven un selector de modelo junto al botón Generar. La preferencia se persiste en `user_preferences.selected_model`.
 
 ---
 
@@ -159,39 +194,45 @@ npm run dev
 | `embedding` | vector(1536) | Embedding para cache semántico (pgvector) |
 | `created_at` | timestamptz | — |
 
-### `github_connections`
+### `user_preferences`
+| Columna | Tipo | Descripción |
+|---------|------|-------------|
+| `user_id` | uuid | PK, FK → auth.users |
+| `lang` | text | `es` \| `en` |
+| `provider` | text | Proveedor preferido (BYOK) |
+| `selected_model` | text | Key del modelo elegido del catálogo FREE_MODELS |
+| `show_sidebar` | bool | Sidebar visible |
+| `edu_mode` | bool | Modo educativo |
+
+### `user_favorites`
 | Columna | Tipo | Descripción |
 |---------|------|-------------|
 | `id` | uuid | PK |
-| `user_id` | uuid | FK → auth.users (único por usuario) |
-| `vault_id` | uuid | Token de GitHub cifrado en Vault |
-| `username` | text | Login de GitHub del usuario |
-| `connected_at` | timestamptz | — |
+| `user_id` | uuid | FK → auth.users |
+| `command_id` | uuid | Referencia al comando guardado |
+| `created_at` | timestamptz | — |
 
 ---
 
 ## Seguridad
 
 - **RLS activado** en todas las tablas — cada usuario solo accede a sus propios datos.
-- **API keys y tokens nunca en texto plano** — se cifran con Supabase Vault. El valor real solo se recupera en Server Components/Route Handlers.
-- **Las keys nunca aparecen en responses** de la API — el cliente solo recibe el resultado de la traducción.
+- **API keys y tokens nunca en texto plano** — se cifran con Supabase Vault. El valor real solo se recupera en Route Handlers.
+- **Las keys de plataforma (`OPENROUTER_API_KEY`, `ZEN_API_KEY`) nunca se exponen al cliente** — solo se usan en el servidor.
 - **Validación de env al arrancar** — `src/lib/env.ts` lanza error descriptivo si faltan variables requeridas.
 
 ---
 
 ## Planes
 
-| Plan | Comandos | IA | Providers |
-|------|----------|----|-----------|
-| **Starter (Free)** | 20/mes | Incluida (gestionada) | — |
-| **Pro** | Ilimitados | BYOK | 6 providers |
-| **Teams** | Ilimitados | BYOK | 6 providers + próximamente |
-
-El Modo Educativo (explicaciones detalladas por flag) está disponible en todos los planes con límite de 5 usos/semana en Free.
+| Plan | Comandos/mes | IA gestionada | Elección de modelo | BYOK |
+|------|-------------|---------------|-------------------|------|
+| **Starter** | 20 | Llama 3.1 8B (fijo) | No | No |
+| **Pro** | 200 | 6 modelos a elegir | Sí | Sí (6 providers) |
 
 ---
 
-## Proveedores soportados (Pro / BYOK)
+## Proveedores BYOK (Pro)
 
 | Proveedor | Modelo por defecto | Cómo obtener key |
 |-----------|-------------------|-----------------|
@@ -224,8 +265,8 @@ Modo oscuro/claro vía `data-theme` en `document.documentElement`.
 | 1 — Escala | Cache semántico pgvector + rate limiting | ✅ |
 | 2 — Contexto | GitHub read-only + "Fix my repo" | ✅ |
 | 3 — Distribución | VS Code Extension | ✅ |
-| 4 — Retención | Memory layer + quick actions | ⬜ |
-| 5 — Monetización | Freemium completo (Stripe) | ⬜ |
+| 4 — Retención | Quick actions, favoritos, usage badge, plan badge | ✅ |
+| 5 — Monetización | AI Gateway + Stripe + enforcement de planes | 🔄 |
 
 Ver [AI-COLLAB.md](./AI-COLLAB.md) para el detalle de tareas entre Claude y Opencode.
 
@@ -233,7 +274,7 @@ Ver [AI-COLLAB.md](./AI-COLLAB.md) para el detalle de tareas entre Claude y Open
 
 ## VS Code Extension
 
-GitSpeak tiene una extensión oficial para VS Code disponible en `packages/vscode-extension/`.
+GitSpeak tiene una extensión oficial para VS Code en `packages/vscode-extension/`.
 
 ### Instalar desde Marketplace
 
@@ -243,18 +284,18 @@ GitSpeak tiene una extensión oficial para VS Code disponible en `packages/vscod
 
 ### Instalar manualmente (VSIX)
 
-1. Descargá el `.vsix` desde la página de [Releases](https://github.com/ZIVELO-MX/prompt2git/releases).
-2. Extensions panel → `···` → **Install from VSIX…** → seleccioná el archivo.
+1. Descarga el `.vsix` desde [Releases](https://github.com/ZIVELO-MX/prompt2git/releases).
+2. Extensions panel → `···` → **Install from VSIX…** → selecciona el archivo.
 
 ### Primer uso
 
-En el primer uso la extensión abre el browser en `https://www.prompt2git.com/login`.
-Después de autenticarte, el token queda guardado en VS Code Secret Storage — no hace falta volver a loguearse.
+En el primer uso la extensión abre el browser en `https://www.prompt2git.com/login`. Después de autenticarte, el token queda en VS Code Secret Storage — no hace falta volver a loguearse.
 
 ### Uso
 
 - `Cmd+Shift+G` (macOS) / `Ctrl+Shift+G` (Windows/Linux) para abrir el panel.
-- Escribí lo que querés hacer en lenguaje natural → revisá el comando → **Run in terminal**.
-- Modo **Fix my repo**: describí el problema y GitSpeak sugiere un plan de recuperación paso a paso.
+- Escribe en lenguaje natural → revisa el comando → **Run in terminal**.
+- Modo **Fix my repo**: describe el problema y GitSpeak sugiere un plan de recuperación paso a paso.
+- El modelo de IA activo es el mismo que el usuario tiene configurado en la web.
 
 Ver [`packages/vscode-extension/README.md`](./packages/vscode-extension/README.md) para desarrollo local y publicación.
