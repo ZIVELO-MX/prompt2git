@@ -113,7 +113,7 @@ Conectar Stripe para manejar suscripciones, facturación y webhooks. Implementar
 - Webhooks para sync de estado de suscripción (`customer.subscription.updated`, `invoice.paid`, etc.)
 - Server Actions para crear sesiones de checkout y portal de cliente
 - Tabla `subscriptions` en Supabase vinculada a `auth.users`
-
+- Cambio de magic link a creacion de cuenta, paa gestionar la info para los pagos
 ### AI Gateway — Plan-based model routing
 Cuando la monetización esté activa, extender el sistema de fallback para seleccionar el modelo según el plan del usuario:
 - `free` → siempre modelo económico (openrouter free tier)

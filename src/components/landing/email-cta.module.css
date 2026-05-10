@@ -35,8 +35,7 @@
 
 .submit {
   background: var(--accent);
-  color: #020507;
-  color: oklch(0.11 0.01 240);
+  color: var(--accent-fg);
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 600;
@@ -49,5 +48,13 @@
 .submit:hover:not(:disabled) { background: #6de362; }
 .submit:hover:not(:disabled) { background: oklch(0.82 0.20 142); }
 .submit:disabled { cursor: default; }
+
+.submit:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.srOnly {
+  position: absolute; width: 1px; height: 1px;
+  overflow: hidden; clip: rect(0,0,0,0);
+  white-space: nowrap; border: 0;
+}
 
 .note { font-size: 12px; color: var(--text-muted); }

@@ -1,25 +1,54 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { t, type Lang } from '@/lib/i18n'
 import styles from './how-it-works.module.css'
 
 export function HowItWorks({ lang }: { lang: Lang }) {
   const [active, setActive] = useState(0)
+  const timerRef = useRef<ReturnType<typeof setInterval>>(undefined)
+
+  const startTimer = useCallback(() => {
+    timerRef.current = setInterval(() => setActive(n => (n + 1) % 3), 4000)
+  }, [])
 
   useEffect(() => {
-    const t = setInterval(() => setActive(n => (n + 1) % 3), 4000)
-    return () => clearInterval(t)
-  }, [])
+    startTimer()
+    return () => clearInterval(timerRef.current)
+  }, [startTimer])
+
+  // Pausar interval cuando la pestaña está oculta
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.hidden) {
+        clearInterval(timerRef.current)
+      } else {
+        startTimer()
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [startTimer])
+
+  function handleKeyDown(i: number, e: React.KeyboardEvent) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      setActive(i)
+    }
+  }
 
   return (
     <div className={styles.grid}>
-      <div className={styles.steps}>
+      <div className={styles.steps} role="tablist" aria-label={t('landing.how.steps_label', lang)}>
         {[0, 1, 2].map((i) => (
           <div
             key={i}
+            role="tab"
+            tabIndex={active === i ? 0 : -1}
+            aria-selected={active === i}
             className={`${styles.step} ${active === i ? styles.stepActive : ''}`}
             onClick={() => setActive(i)}
+            onKeyDown={e => handleKeyDown(i, e)}
           >
             <div className={styles.stepNum}>{i + 1}</div>
             <div>
@@ -30,7 +59,7 @@ export function HowItWorks({ lang }: { lang: Lang }) {
         ))}
       </div>
 
-      <div className={styles.visual}>
+      <div className={styles.visual} aria-live="polite" aria-atomic="true">
         {active === 0 && (
           <div className={styles.card}>
             <div className={styles.cardBar}>
