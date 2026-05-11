@@ -5,6 +5,14 @@ import styles from './terminos.module.css'
 export const metadata: Metadata = {
   title: 'Términos de Servicio — Prompt2Git',
   description: 'Condiciones de uso del servicio Prompt2Git operado por ZIVELO.',
+  openGraph: {
+    title: 'Términos de Servicio — Prompt2Git',
+    description: 'Condiciones de uso del servicio Prompt2Git operado por ZIVELO.',
+  },
+  twitter: {
+    title: 'Términos de Servicio — Prompt2Git',
+    description: 'Condiciones de uso del servicio Prompt2Git operado por ZIVELO.',
+  },
 }
 
 export default function TerminosPage() {

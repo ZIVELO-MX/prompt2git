@@ -5,6 +5,14 @@ import styles from './privacidad.module.css'
 export const metadata: Metadata = {
   title: 'Política de Privacidad — Prompt2Git',
   description: 'Cómo Prompt2Git recopila, usa y protege tu información personal.',
+  openGraph: {
+    title: 'Política de Privacidad — Prompt2Git',
+    description: 'Cómo Prompt2Git recopila, usa y protege tu información personal.',
+  },
+  twitter: {
+    title: 'Política de Privacidad — Prompt2Git',
+    description: 'Cómo Prompt2Git recopila, usa y protege tu información personal.',
+  },
 }
 
 export default function PrivacidadPage() {
